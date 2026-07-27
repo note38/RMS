@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  REQUESTER
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  role      Role     @default(REQUESTER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repairRequestsCreated    RepairRequest[]   @relation("RepairCreatedBy")
+  repairRequestsApproved   RepairRequest[]   @relation("RepairApprovedBy")
+  cctvRequestsCreated      CctvRequest[]     @relation("CctvCreatedBy")
+  cctvRequestsApproved     CctvRequest[]     @relation("CctvApprovedBy")
+  internetRequestsCreated  InternetRequest[] @relation("InternetCreatedBy")
+  internetRequestsApproved InternetRequest[] @relation("InternetApprovedBy")
+}
+
+model RepairRequest {
+  id               Int      @id @default(autoincrement())
+  seriesNo         String   @unique
+  requestingOffice String
+  requestedBy      String   @default("")
+  date             DateTime @default(now())
+
+  natureOfRepair String
+  actionType     String
+  equipmentType  String
+
+  brandName  String
+  modelNo    String
+  serialNo   String
+  propertyNo String
+
+  preInspection     String?
+  preRecommendation String?
+  postInspection    String?
+
+  createdById  Int
+  createdBy    User  @relation("RepairCreatedBy", fields: [createdById], references: [id])
+
+  approvedById Int?
+  approvedBy   User? @relation("RepairApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CctvRequest {
+  id                 Int      @id @default(autoincrement())
+  seriesNo           String   @unique
+  natureOfRepair     String?  // legacy compatibility
+  requestType        String   @default("PLAYBACK_VIEWING")
+  requestingOffice   String   @default("")
+  location           String   @default("")
+  requestingParty    String   @default("")
+  address            String   @default("")
+  purpose            String   @default("")
+  dateOfFootage      String?
+  timeOfFootage      String?
+  requestedBy        String   @default("") // free-text name on the form itself
+  availabilityStatus String?
+  requirements       String?
+
+  createdById  Int
+  createdBy    User  @relation("CctvCreatedBy", fields: [createdById], references: [id])
+
+  approvedById Int?
+  approvedBy   User? @relation("CctvApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InternetRequest {
+  id               Int      @id @default(autoincrement())
+  seriesNo         String   @unique
+  natureOfRepair   String
+  requestingOffice String
+  location         String
+  purpose          String
+  requestedBy      String   // free-text name on the form itself
+
+  createdById  Int
+  createdBy    User  @relation("InternetCreatedBy", fields: [createdById], references: [id])
+
+  approvedById Int?
+  approvedBy   User? @relation("InternetApprovedBy", fields: [approvedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
