@@ -14,15 +14,23 @@ export const metadata: Metadata = {
   description: 'Request Management System',
 }
 
+// Global post-sign-in destination — /sync routes by role (admins to
+// /dashboard, requesters to /request-form). Applies to any flow that
+// doesn't pass an explicit redirect, e.g. the Google OAuth callback.
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={`${robotoFlex.variable} bg-background`}>
-        <body className="font-sans antialiased">
+    <ClerkProvider
+      signInFallbackRedirectUrl="/sync"
+      signUpFallbackRedirectUrl="/sync"
+      signInForceRedirectUrl="/sync"
+      signUpForceRedirectUrl="/sync"
+    >
+      <html lang="en" className={`${robotoFlex.variable} bg-background`} suppressHydrationWarning>
+        <body className="font-sans antialiased" suppressHydrationWarning>
           {children}
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </body>

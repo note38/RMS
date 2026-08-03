@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
-import { UserButton } from "@clerk/nextjs";
+import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
 import { prisma } from "@/lib/prisma";
 import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export default async function RequestFormPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {dbUser.role === "ADMIN" && (
+            {(dbUser.role === "ADMIN" || dbUser.role === "SUPERADMIN") && (
               <Link href="/dashboard">
                 <Button variant="default" size="sm" className="gap-1.5 cursor-pointer font-semibold">
                   <ArrowLeft className="size-4" />
@@ -91,7 +91,13 @@ export default async function RequestFormPage() {
               </Button>
             </Link>
 
-            <UserButton userProfileUrl="/account" userProfileMode="navigation" />
+            <UserHeaderMenu
+              initialUser={{
+                name: dbUser.name,
+                email: dbUser.email,
+                role: dbUser.role,
+              }}
+            />
           </div>
         </div>
       </header>
@@ -112,7 +118,7 @@ export default async function RequestFormPage() {
         <RequestPortalClient
           userRequests={userRequests}
           defaultUserName={dbUser.name || ""}
-          isAdmin={dbUser.role === "ADMIN"}
+          isAdmin={dbUser.role === "ADMIN" || dbUser.role === "SUPERADMIN"}
           defaultAdminName={dbUser.name || ""}
         />
       </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wrench, Video, Wifi, X, Check, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +31,12 @@ export function RequestModal({
   );
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (isOpen && initialType) {
+      setActiveTab(initialType);
+    }
+  }, [isOpen, initialType]);
 
   if (!isOpen) return null;
 
@@ -262,13 +268,12 @@ export function RequestModal({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className={labelCls}>Requesting Office *</label>
-                  <input
-                    required
-                    name="requestingOffice"
-                    placeholder="e.g. Provincial Security Office"
-                    className={inputCls}
-                  />
+                  <label className={labelCls}>Nature of Request *</label>
+                  <select required name="requestType" className={selectCls}>
+                    <option value="">Select nature of request…</option>
+                    <option value="Playback Viewing Only">Playback Viewing Only</option>
+                    <option value="Export Surveillance Footage">Export Surveillance Footage</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <label className={labelCls}>CCTV Location / Camera Area *</label>
@@ -283,7 +288,7 @@ export function RequestModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className={labelCls}>Requesting Party Name *</label>
+                  <label className={labelCls}>Name of Requesting Party *</label>
                   <input
                     required
                     name="requestingParty"
@@ -305,6 +310,14 @@ export function RequestModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
+                  <label className={labelCls}>Requesting Office (Optional)</label>
+                  <input
+                    name="requestingOffice"
+                    placeholder="e.g. Security Office / Office Name"
+                    className={inputCls}
+                  />
+                </div>
+                <div className="space-y-1">
                   <label className={labelCls}>Date of Incident / Footage *</label>
                   <input
                     type="date"
@@ -313,15 +326,16 @@ export function RequestModal({
                     className={inputCls}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className={labelCls}>Time Range of Footage *</label>
-                  <input
-                    required
-                    name="timeOfFootage"
-                    placeholder="e.g. 02:00 PM - 03:30 PM"
-                    className={inputCls}
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className={labelCls}>Time Range of Footage *</label>
+                <input
+                  required
+                  name="timeOfFootage"
+                  placeholder="e.g. 02:00 PM - 03:30 PM"
+                  className={inputCls}
+                />
               </div>
 
               <div className="space-y-1">
@@ -334,6 +348,35 @@ export function RequestModal({
                   className={`${inputCls} resize-none`}
                 />
               </div>
+
+              {/* Admin optional fields when admin creates or approves */}
+              {isAdmin && (
+                <div className="pt-2 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      Requirements Label (Admin)
+                    </label>
+                    <select name="requirements" className={selectCls}>
+                      <option value="">Select Requirements…</option>
+                      <option value="Valid ID">Valid ID</option>
+                      <option value="Police Request">Police Request</option>
+                      <option value="Contract/Plantilla">Contract/Plantilla</option>
+                      <option value="Storage Device (Optional)">Storage Device (Optional)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-primary uppercase tracking-wider">
+                      Availability Status (Admin)
+                    </label>
+                    <select name="availabilityStatus" className={selectCls}>
+                      <option value="">Select Availability Status…</option>
+                      <option value="Footage Available">Footage Available</option>
+                      <option value="Footage Not Available">Footage Not Available</option>
+                      <option value="For Release">For Release</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -377,10 +420,8 @@ export function RequestModal({
                   <select required name="natureOfRepair" className={selectCls}>
                     <option value="">Select nature of request…</option>
                     <option value="CCTV Installation">CCTV Installation</option>
-                    <option value="New">New</option>
-                    <option value="Check-up/Repair">Check-up/Repair</option>
                     <option value="Internet Line Installation">Internet Line Installation</option>
-                    <option value="Additional">Additional</option>
+                    <option value="Check-up/Repair">Check-up/Repair</option>
                   </select>
                 </div>
               </div>

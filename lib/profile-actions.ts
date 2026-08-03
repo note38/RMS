@@ -22,7 +22,10 @@ export async function updateUserProfile(formData: FormData) {
 
   await prisma.user.update({
     where: { id: dbUser.id },
-    data: { name: fullName },
+    data: { 
+      name: fullName,
+      profileCompleted: true,
+    },
   });
 
   revalidatePath("/sync");
@@ -46,7 +49,13 @@ export async function updateAccountProfile(formData: FormData) {
   }
 
   const fullName = `${firstName} ${lastName}`;
-  await prisma.user.update({ where: { id: dbUser.id }, data: { name: fullName } });
+  await prisma.user.update({
+    where: { id: dbUser.id },
+    data: { 
+      name: fullName,
+      profileCompleted: true,
+    },
+  });
 
   revalidatePath("/account");
   revalidatePath("/dashboard");

@@ -30,32 +30,46 @@ export async function getOrSyncUser() {
 
   if (!dbUser) {
     // 2. If not found by clerkId, check if email matches existing DB user
-    const existingByEmail = await prisma.user.findUnique({
+    //    Try exact match first, then case-insensitive (ILIKE) as fallback
+    let existingByEmail = await prisma.user.findUnique({
       where: { email: primaryEmail },
     });
 
+    if (!existingByEmail) {
+      existingByEmail = await prisma.user.findFirst({
+        where: { email: { equals: primaryEmail, mode: "insensitive" } },
+      });
+    }
+
     if (existingByEmail) {
+      const hasCustomName =
+        existingByEmail.name &&
+        !existingByEmail.name.includes("@") &&
+        existingByEmail.name !== existingByEmail.email;
+
       dbUser = await prisma.user.update({
         where: { id: existingByEmail.id },
         data: {
           clerkId: clerkUser.id,
-          name: fullName,
+          name: hasCustomName ? existingByEmail.name : fullName,
+          // Retain the existing profileCompleted status without auto-flipping
+          profileCompleted: existingByEmail.profileCompleted,
         },
       });
     } else {
-      // 3. Create brand new user in DB (defaults to REQUESTER role)
+      // 3. Create brand new user in DB (defaults to REQUESTER role, profileCompleted: false)
       dbUser = await prisma.user.create({
         data: {
           clerkId: clerkUser.id,
           email: primaryEmail,
           name: fullName,
           role: Role.REQUESTER,
+          profileCompleted: false,
         },
       });
     }
   } else {
-    // 4. Update email if changed, but only sync name from Clerk if the user
-    //    hasn't already set a valid custom name (i.e. it's not just their email).
+    // 4. Update email if changed.
     const hasCustomName =
       dbUser.name &&
       !dbUser.name.includes("@") &&
@@ -66,9 +80,21 @@ export async function getOrSyncUser() {
       data: {
         email: primaryEmail,
         name: hasCustomName ? dbUser.name : fullName,
+        // Do not auto-flip profileCompleted. Only the completion form does this.
       },
     });
   }
 
   return dbUser;
 }
+
+/** Returns true if the user has the SUPERADMIN role. */
+export function isSuperAdmin(user: { role: string } | null): boolean {
+  return user?.role === "SUPERADMIN";
+}
+
+/** Returns true if the user has ADMIN or SUPERADMIN role. */
+export function isAdminOrSuperAdmin(user: { role: string } | null): boolean {
+  return user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+}
+

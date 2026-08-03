@@ -9,18 +9,13 @@ export default async function CompleteProfilePage() {
     redirect("/");
   }
 
-  // Pre-split existing name if available and valid
-  const existingNameParts = (dbUser.name || "").trim().split(/\s+/);
-  const hasValidName =
-    dbUser.name &&
-    dbUser.name !== dbUser.email &&
-    !dbUser.name.includes("@") &&
-    existingNameParts.length >= 2;
-
-  // If already has a full name, skip this page
-  if (hasValidName) {
+  // If already completed profile explicitly, skip this page
+  if (dbUser.profileCompleted) {
     redirect("/sync");
   }
+
+  // Pre-fill existing name if available (from Clerk or Google) for user convenience
+  const existingNameParts = (dbUser.name || "").trim().split(/\s+/);
 
   const defaultFirstName =
     existingNameParts[0] && !existingNameParts[0].includes("@")

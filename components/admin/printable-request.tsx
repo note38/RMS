@@ -160,32 +160,93 @@ export function PrintableRequestModal({ item, onClose }: PrintableRequestModalPr
           </div>
 
           {/* Signatures & Approval Section */}
-          <div className="pt-8 border-t border-slate-300 grid grid-cols-3 gap-6 text-xs">
-            {/* Prepared By */}
-            <div>
-              <p className="text-slate-400 uppercase font-semibold text-[10px]">Prepared By:</p>
-              <div className="mt-8 border-b border-slate-400 w-36" />
-              <p className="font-bold text-slate-800 mt-1">{item.createdBy.name || item.requestedBy}</p>
-              <p className="text-[10px] text-slate-500">Requesting Party</p>
-            </div>
+          <div className="pt-8 border-t border-slate-300">
+            {/* Category: CCTV Footage Request Signatures */}
+            {item.category === "CCTV" && (
+              <div className="space-y-8 text-xs">
+                {/* Row 1: Requesting Party, CCTV Operator, Head of Operation */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Requesting Party:</p>
+                    <div className="mt-8 border-b border-slate-400 w-44" />
+                    <p className="font-bold text-slate-800 mt-1">{item.requestedBy || item.createdBy.name}</p>
+                    <p className="text-[10px] text-slate-500">Requesting Party Signature</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Technician:</p>
+                    <div className="mt-8 border-b border-slate-400 w-44" />
+                    <p className="font-bold text-slate-800 mt-1">CCTV Operator</p>
+                    <p className="text-[10px] text-slate-500">CCTV System Operator</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Head of Operation:</p>
+                    <div className="mt-8 border-b border-slate-400 w-44" />
+                    <p className="font-bold text-slate-800 mt-1">RICARDO Q. BAUTISTA</p>
+                    <p className="text-[10px] text-slate-500">Head of Operation</p>
+                  </div>
+                </div>
 
-            {/* Technician */}
-            <div>
-              <p className="text-slate-400 uppercase font-semibold text-[10px]">Technician:</p>
-              <div className="mt-8 border-b border-slate-400 w-36" />
-              <p className="font-bold text-slate-800 mt-1">
-                {technicianName || (item.isApproved ? "MIS Technician" : "Pending Assignment")}
-              </p>
-              <p className="text-[10px] text-slate-500">MIS Technical Staff</p>
-            </div>
+                {/* Row 2: Recommending Approval & Approved By */}
+                <div className="grid grid-cols-2 gap-8 pt-4 border-t border-slate-200">
+                  <div>
+                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Recommending Approval:</p>
+                    <div className="mt-8 border-b border-slate-400 w-52" />
+                    <p className="font-bold text-slate-800 mt-1">SHIERWIN H. TAAY</p>
+                    <p className="text-[10px] text-slate-500">Provincial Administrator</p>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Approved By:</p>
+                    <div className="mt-8 border-b border-slate-400 w-52" />
+                    <p className="font-bold text-slate-800 mt-1">HON. ISIDRO P. GALBAN</p>
+                    <p className="text-[10px] text-slate-500">Governor</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* Approved By — always SHIERWIN H. TAAY */}
-            <div className="text-right flex flex-col items-end">
-              <p className="text-slate-400 uppercase font-semibold text-[10px]">Approved By:</p>
-              <div className="mt-8 border-b border-slate-400 w-36" />
-              <p className="font-bold text-slate-800 mt-1">{FIXED_APPROVER_NAME}</p>
-              <p className="text-[10px] text-slate-500">{FIXED_APPROVER_TITLE}</p>
-            </div>
+            {/* Category: CCTV/Internet Installation Signatures */}
+            {item.category === "Internet" && (
+              <div className="grid grid-cols-2 gap-8 text-xs">
+                <div>
+                  <p className="text-slate-400 uppercase font-semibold text-[10px]">Requested By:</p>
+                  <div className="mt-8 border-b border-slate-400 w-48" />
+                  <p className="font-bold text-slate-800 mt-1">{item.requestedBy || item.createdBy.name}</p>
+                  <p className="text-[10px] text-slate-500">Requesting Party</p>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <p className="text-slate-400 uppercase font-semibold text-[10px]">Approved By:</p>
+                  <div className="mt-8 border-b border-slate-400 w-48" />
+                  <p className="font-bold text-slate-800 mt-1">SHIERWIN H. TAAY</p>
+                  <p className="text-[10px] text-slate-500">Provincial Administrator</p>
+                </div>
+              </div>
+            )}
+
+            {/* Category: Technical Repair Signatures */}
+            {item.category === "Repair" && (
+              <div className="grid grid-cols-3 gap-6 text-xs">
+                <div>
+                  <p className="text-slate-400 uppercase font-semibold text-[10px]">Prepared By:</p>
+                  <div className="mt-8 border-b border-slate-400 w-36" />
+                  <p className="font-bold text-slate-800 mt-1">{item.createdBy.name || item.requestedBy}</p>
+                  <p className="text-[10px] text-slate-500">Requesting Party</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 uppercase font-semibold text-[10px]">Technician:</p>
+                  <div className="mt-8 border-b border-slate-400 w-36" />
+                  <p className="font-bold text-slate-800 mt-1">
+                    {technicianName || (item.isApproved ? "MIS Technician" : "Pending Assignment")}
+                  </p>
+                  <p className="text-[10px] text-slate-500">MIS Technical Staff</p>
+                </div>
+                <div className="text-right flex flex-col items-end">
+                  <p className="text-slate-400 uppercase font-semibold text-[10px]">Approved By:</p>
+                  <div className="mt-8 border-b border-slate-400 w-36" />
+                  <p className="font-bold text-slate-800 mt-1">{FIXED_APPROVER_NAME}</p>
+                  <p className="text-[10px] text-slate-500">{FIXED_APPROVER_TITLE}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Document Footer */}

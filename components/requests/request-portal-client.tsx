@@ -174,14 +174,16 @@ export function RequestPortalClient({
       </div>
 
       {/* Form Modal */}
-      <RequestModal
-        isOpen={modalOpen}
-        initialType={activeFormType}
-        onClose={() => setModalOpen(false)}
-        defaultUserName={defaultUserName}
-        isAdmin={isAdmin}
-        defaultAdminName={defaultAdminName || defaultUserName}
-      />
+      {modalOpen && (
+        <RequestModal
+          isOpen={modalOpen}
+          initialType={activeFormType}
+          onClose={() => setModalOpen(false)}
+          defaultUserName={defaultUserName}
+          isAdmin={isAdmin}
+          defaultAdminName={defaultAdminName || defaultUserName}
+        />
+      )}
     </div>
   );
 }

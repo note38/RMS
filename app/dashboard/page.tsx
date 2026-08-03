@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
-import { UserButton } from "@clerk/nextjs";
+import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
 import { prisma } from "@/lib/prisma";
-import { Wrench, Video, Wifi, Users, FileText, Home } from "lucide-react";
+import { Wrench, Video, Wifi, FileText, Home, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminRequestsTable, SystemRequest } from "@/components/admin/admin-requests-table";
 import { AdminToolbar } from "@/components/admin/admin-toolbar";
@@ -12,7 +12,8 @@ export default async function DashboardPage() {
   const dbUser = await getOrSyncUser();
 
   if (!dbUser) redirect("/");
-  if (dbUser.role !== "ADMIN") redirect("/request-form");
+  // Allow both ADMIN and SUPERADMIN to access the dashboard
+  if (dbUser.role !== "ADMIN" && dbUser.role !== "SUPERADMIN") redirect("/request-form");
 
   const [repairs, cctvs, internets, allUsers] = await Promise.all([
     prisma.repairRequest.findMany({
@@ -45,6 +46,9 @@ export default async function DashboardPage() {
     approvedBy: item.approvedBy
       ? { id: item.approvedBy.id, name: item.approvedBy.name, email: item.approvedBy.email }
       : null,
+    // Pass technician fields through to the table
+    technicianFindings: item.technicianFindings,
+    technicianRecommendation: item.technicianRecommendation,
     details: {
       "Requested By":    item.requestedBy,
       "Equipment Type":  item.equipmentType,
@@ -56,6 +60,8 @@ export default async function DashboardPage() {
       "Action Type":     item.actionType,
       "Pre-Inspection":  item.preInspection,
       "Technician":      item.preRecommendation, // repurposed field
+      "Findings":        item.technicianFindings,
+      "Recommendation":  item.technicianRecommendation,
     },
   }));
 
@@ -63,22 +69,33 @@ export default async function DashboardPage() {
     id: item.id,
     seriesNo: item.seriesNo,
     category: "CCTV",
-    requestingOffice: item.requestingOffice,
-    requestedBy: item.requestedBy || item.createdBy.name || item.createdBy.email,
+    requestingOffice: item.requestingOffice || item.address || "N/A",
+    requestedBy: item.requestedBy || item.requestingParty || item.createdBy.name || item.createdBy.email,
     date: new Date(item.createdAt).toLocaleDateString(),
     isApproved: Boolean(item.approvedById),
     createdBy: { id: item.createdBy.id, name: item.createdBy.name, email: item.createdBy.email },
     approvedBy: item.approvedBy
       ? { id: item.approvedBy.id, name: item.approvedBy.name, email: item.approvedBy.email }
       : null,
+    requestType: item.requestType,
+    location: item.location,
+    requestingParty: item.requestingParty,
+    address: item.address,
+    purpose: item.purpose,
+    dateOfFootage: item.dateOfFootage,
+    timeOfFootage: item.timeOfFootage,
+    requirements: item.requirements,
+    availabilityStatus: item.availabilityStatus,
     details: {
-      "Request Type":     item.requestType,
-      Location:           item.location,
-      "Requesting Party": item.requestingParty,
-      Address:            item.address,
-      Purpose:            item.purpose,
-      "Date of Footage":  item.dateOfFootage,
-      "Time of Footage":  item.timeOfFootage,
+      "Nature of Request":   item.requestType || "Playback Viewing Only",
+      Location:             item.location,
+      "Requesting Party":   item.requestingParty,
+      "Address / Agency":   item.address,
+      Purpose:              item.purpose,
+      "Date of Footage":    item.dateOfFootage,
+      "Time of Footage":    item.timeOfFootage,
+      "Requirements":       item.requirements,
+      "Availability Status": item.availabilityStatus,
     },
   }));
 
@@ -108,6 +125,8 @@ export default async function DashboardPage() {
     ...normalizedInternets,
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  const isSuperAdmin = dbUser.role === "SUPERADMIN";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -117,7 +136,7 @@ export default async function DashboardPage() {
             <img src="/logo.png" alt="MIS/CCTV Command Center" width={40} height={40} />
             <div>
               <h1 className="text-base font-bold text-foreground leading-tight">
-                Admin Command Center
+                {isSuperAdmin ? "Super Admin Command Center" : "Admin Command Center"}
               </h1>
               <p className="text-xs text-muted-foreground">
                 MIS &amp; CCTV Request Management System
@@ -126,14 +145,27 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {isSuperAdmin && (
+              <Link href="/super-admin">
+                <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30">
+                  <ShieldCheck className="size-4" />
+                  <span className="hidden sm:inline">Super Admin</span>
+                </Button>
+              </Link>
+            )}
             <Link href="/">
               <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
                 <Home className="size-4" />
                 <span className="hidden sm:inline">Home</span>
               </Button>
             </Link>
-            {/* Routes "Manage account" to our custom /account page */}
-            <UserButton userProfileUrl="/account" userProfileMode="navigation" />
+            <UserHeaderMenu
+              initialUser={{
+                name: dbUser.name,
+                email: dbUser.email,
+                role: dbUser.role,
+              }}
+            />
           </div>
         </div>
       </header>
@@ -157,7 +189,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* System Stats Bar */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Technical Repairs</p>
@@ -187,22 +219,12 @@ export default async function DashboardPage() {
               <Wifi className="size-6" />
             </div>
           </div>
-
-          <div className="rounded-xl border border-border bg-card p-5 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Registered Users</p>
-              <h3 className="text-2xl font-bold text-foreground mt-1">{allUsers.length}</h3>
-            </div>
-            <div className="rounded-lg bg-orange-500/10 p-3 text-orange-600">
-              <Users className="size-6" />
-            </div>
-          </div>
         </div>
 
         {/* Requests Table */}
         <AdminRequestsTable initialRequests={allRequests} />
 
-        {/* Admin Toolbar: Backup/Restore + User Management */}
+        {/* Admin Toolbar: Users list (requesters only) */}
         <AdminToolbar users={allUsers} />
       </main>
     </div>

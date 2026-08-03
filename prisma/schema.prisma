@@ -10,14 +10,16 @@ datasource db {
 enum Role {
   REQUESTER
   ADMIN
+  SUPERADMIN
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  role      Role     @default(REQUESTER)
+  id               Int      @id @default(autoincrement())
+  clerkId          String   @unique
+  email            String   @unique
+  name             String?
+  role             Role     @default(REQUESTER)
+  profileCompleted Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -49,6 +51,10 @@ model RepairRequest {
   preInspection     String?
   preRecommendation String?
   postInspection    String?
+
+  // Technician fields filled by admin/technician after inspection
+  technicianFindings       String?
+  technicianRecommendation String?
 
   createdById  Int
   createdBy    User  @relation("RepairCreatedBy", fields: [createdById], references: [id])

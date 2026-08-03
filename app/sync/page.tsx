@@ -1,4 +1,4 @@
-import { getOrSyncUser } from "@/lib/auth";
+import { getOrSyncUser, isAdminOrSuperAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function SyncPage() {
@@ -8,19 +8,14 @@ export default async function SyncPage() {
     redirect("/");
   }
 
-  // Check if full name (First & Last name) is missing or incomplete
-  const nameParts = (dbUser.name || "").trim().split(/\s+/);
-  const isNameIncomplete =
-    !dbUser.name ||
-    dbUser.name === dbUser.email ||
-    dbUser.name.includes("@noemail.com") ||
-    nameParts.length < 2;
-
-  if (isNameIncomplete) {
+  // Redirect to complete profile if profile has not been explicitly completed
+  if (!dbUser.profileCompleted) {
     redirect("/complete-profile");
   }
 
-  if (dbUser.role === "ADMIN") {
+  if (dbUser.role === "SUPERADMIN") {
+    redirect("/super-admin");
+  } else if (dbUser.role === "ADMIN") {
     redirect("/dashboard");
   } else {
     redirect("/request-form");

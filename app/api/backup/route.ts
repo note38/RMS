@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 
-async function getAdminUser() {
+async function getSuperAdminUser() {
   const clerkUser = await currentUser();
   if (!clerkUser) return null;
   const dbUser = await prisma.user.findUnique({ where: { clerkId: clerkUser.id } });
-  if (!dbUser || dbUser.role !== "ADMIN") return null;
+  if (!dbUser || dbUser.role !== "SUPERADMIN") return null;
   return dbUser;
 }
 
-/** GET /api/backup — download full JSON backup */
+/** GET /api/backup — download full JSON backup (Super Admin only) */
 export async function GET() {
-  const admin = await getAdminUser();
-  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const admin = await getSuperAdminUser();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const [repairs, cctvs, internets, users] = await Promise.all([
     prisma.repairRequest.findMany({ orderBy: { id: "asc" } }),
@@ -40,10 +40,10 @@ export async function GET() {
   });
 }
 
-/** POST /api/backup — restore from JSON backup */
+/** POST /api/backup — restore from JSON backup (Super Admin only) */
 export async function POST(req: NextRequest) {
-  const admin = await getAdminUser();
-  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const admin = await getSuperAdminUser();
+  if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   let backup: any;
   try {
