@@ -7,6 +7,7 @@ import { Home, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SuperAdminPanel } from "@/components/admin/super-admin-panel";
 
+export const dynamic = 'force-dynamic';
 export default async function SuperAdminPage() {
   const dbUser = await getOrSyncUser();
 

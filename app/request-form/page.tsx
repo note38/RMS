@@ -7,6 +7,7 @@ import { Home, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestPortalClient, UserRequestSummary } from "@/components/requests/request-portal-client";
 
+export const dynamic = 'force-dynamic';
 export default async function RequestFormPage() {
   const dbUser = await getOrSyncUser();
 

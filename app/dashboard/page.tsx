@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AdminRequestsTable, SystemRequest } from "@/components/admin/admin-requests-table";
 import { AdminToolbar } from "@/components/admin/admin-toolbar";
 
+export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const dbUser = await getOrSyncUser();
 

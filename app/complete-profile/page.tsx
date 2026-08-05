@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
 import { CompleteProfileForm } from "@/components/profile/complete-profile-form";
 
+export const dynamic = 'force-dynamic';
 export default async function CompleteProfilePage() {
   const dbUser = await getOrSyncUser();
 

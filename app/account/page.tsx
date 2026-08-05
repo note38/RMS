@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
 import { AccountForm } from "@/components/profile/account-form";
 
+export const dynamic = 'force-dynamic';
 export default async function AccountPage() {
   const dbUser = await getOrSyncUser();
   if (!dbUser) redirect("/");
