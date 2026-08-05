@@ -189,10 +189,10 @@ export function SignInForm() {
         return;
       }
       if (signIn.status === "complete") {
-        // Activates the session, then routes to the portal.
+        // Activates the session, then routes to the portal with full cookie delivery.
         const { error: finalizeError } = await signIn.finalize({
           navigate: ({ decorateUrl }) =>
-            router.replace(decorateUrl(redirectUrl)),
+            window.location.assign(decorateUrl(redirectUrl)),
         });
         if (finalizeError) setError(getErrorMessage(finalizeError));
       } else {
@@ -234,12 +234,12 @@ export function SignInForm() {
     setNotice(null);
   };
 
-  // Redirect away if already signed in
+  // Redirect away if already signed in (full page navigation ensures server reads session cookies)
   useEffect(() => {
     if (isUserLoaded && isSignedIn) {
-      router.replace(redirectUrl);
+      window.location.assign(redirectUrl);
     }
-  }, [isUserLoaded, isSignedIn, redirectUrl, router]);
+  }, [isUserLoaded, isSignedIn, redirectUrl]);
 
   if (!signIn || (isUserLoaded && isSignedIn)) {
     return (
