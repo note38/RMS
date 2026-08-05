@@ -1,6 +1,6 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn, useUser } from "@clerk/nextjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useEffect,
@@ -70,8 +70,10 @@ function getErrorMessage(error: unknown): string {
  */
 export function SignInForm() {
   const { signIn } = useSignIn();
+  const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+
 
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -232,14 +234,22 @@ export function SignInForm() {
     setNotice(null);
   };
 
-  if (!signIn) {
+  // Redirect away if already signed in
+  useEffect(() => {
+    if (isUserLoaded && isSignedIn) {
+      router.replace(redirectUrl);
+    }
+  }, [isUserLoaded, isSignedIn, redirectUrl, router]);
+
+  if (!signIn || (isUserLoaded && isSignedIn)) {
     return (
-      <div className="space-y-4 animate-pulse" aria-hidden>
-        <div className="h-11 w-full rounded-lg bg-muted" />
-        <div className="h-11 w-full rounded-lg bg-muted" />
+      <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
+        <Loader2 className="size-5 animate-spin text-primary" />
+        <p>{isSignedIn ? "Already signed in. Redirecting..." : "Loading..."}</p>
       </div>
     );
   }
+
 
   return (
     <div className="space-y-4">

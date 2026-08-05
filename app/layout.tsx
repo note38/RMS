@@ -26,8 +26,6 @@ export default function RootLayout({
     <ClerkProvider
       signInFallbackRedirectUrl="/sync"
       signUpFallbackRedirectUrl="/sync"
-      signInForceRedirectUrl="/sync"
-      signUpForceRedirectUrl="/sync"
     >
       <html lang="en" className={`${robotoFlex.variable} bg-background`} suppressHydrationWarning>
         <body className="font-sans antialiased" suppressHydrationWarning>
