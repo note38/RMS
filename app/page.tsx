@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/landing/site-header";
 import { Hero } from "@/components/landing/hero";
 
+export const dynamic = 'force-dynamic';
 export default async function Page() {
   const dbUser = await getOrSyncUser();
   if (dbUser) {
