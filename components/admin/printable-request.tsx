@@ -27,7 +27,7 @@ interface PrintableRequestModalProps {
   onClose: () => void;
 }
 
-const FIXED_APPROVER_NAME  = "SHIERWIN H. TAAY";
+const FIXED_APPROVER_NAME = "SHIERWIN H. TAAY";
 const FIXED_APPROVER_TITLE = "Provincial Administrator";
 
 export function PrintableRequestModal({ item, onClose }: PrintableRequestModalProps) {
@@ -71,24 +71,41 @@ export function PrintableRequestModal({ item, onClose }: PrintableRequestModalPr
           <div className="flex items-center justify-between border-b-2 border-slate-800 pb-4">
             <div className="flex items-center gap-4">
               <img src="/logo.png" alt="Capitol Logo" className="w-16 h-16 object-contain" />
+              <img src="/Bagong_Pilipinas_Logo.svg.webp" alt="Bagong Pilipinas" className="w-16 h-16 object-contain" />
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                <h4
+                  className="text-xs font-bold uppercase tracking-widest text-slate-500"
+                  style={{ fontFamily: "'Times New Roman', Times, serif" }}
+                >
                   Republic of the Philippines
                 </h4>
-                <h2 className="text-xl font-bold uppercase text-slate-900">
+                <h2
+                  className="text-xl font-bold text-slate-900"
+                  style={{ fontFamily: "'Old English Text MT', 'UnifrakturMaguntia', serif" }}
+                >
                   Provincial Government of Aurora
                 </h2>
-                <p className="text-xs font-semibold text-slate-600">
-                  Management Information System &amp; CCTV Command Center
+                <p
+                  className="text-base font-bold text-slate-800"
+                  style={{ fontFamily: "'Baskerville Old Face', 'Baskerville', 'Libre Baskerville', Georgia, serif" }}
+                >
+                  B A L E R
+                </p>
+                <p
+                  className="text-2xl text-slate-600"
+                  style={{ fontFamily: "'Edwardian Script ITC', 'Palatino Linotype', cursive" }}
+                >
+                  Office of the Provincial Administrator
                 </p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-col items-center gap-2">
+
               <div className="inline-block bg-slate-100 border border-slate-300 rounded px-3 py-1 text-right">
                 <p className="text-[10px] font-mono uppercase text-slate-500">Series No.</p>
                 <p className="text-sm font-bold font-mono text-blue-900">{item.seriesNo}</p>
               </div>
-              <p className="text-xs text-slate-500 mt-1">Date: {item.date}</p>
+              <p className="text-xs text-slate-500">Date: {item.date}</p>
             </div>
           </div>
 
@@ -173,10 +190,10 @@ export function PrintableRequestModal({ item, onClose }: PrintableRequestModalPr
                     <p className="text-[10px] text-slate-500">Requesting Party Signature</p>
                   </div>
                   <div>
-                    <p className="text-slate-400 uppercase font-semibold text-[10px]">Technician:</p>
+                    <p className="text-slate-900 uppercase font-semibold text-[10px]">CCTV Operator:</p>
                     <div className="mt-8 border-b border-slate-400 w-44" />
-                    <p className="font-bold text-slate-800 mt-1">CCTV Operator</p>
-                    <p className="text-[10px] text-slate-500">CCTV System Operator</p>
+                    <p className="font-bold text-slate-900 mt-1">&nbsp;</p>
+                    <p className="text-[10px] text-slate-900">CCTV System Operator</p>
                   </div>
                   <div>
                     <p className="text-slate-400 uppercase font-semibold text-[10px]">Head of Operation:</p>

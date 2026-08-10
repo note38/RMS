@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
 import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
 import { prisma } from "@/lib/prisma";
-import { Wrench, Video, Wifi, FileText, Home, ShieldCheck } from "lucide-react";
+import { Wrench, Video, Wifi, FileText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminRequestsTable, SystemRequest } from "@/components/admin/admin-requests-table";
 import { AdminToolbar } from "@/components/admin/admin-toolbar";
@@ -154,12 +154,6 @@ export default async function DashboardPage() {
                 </Button>
               </Link>
             )}
-            <Link href="/">
-              <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
-                <Home className="size-4" />
-                <span className="hidden sm:inline">Home</span>
-              </Button>
-            </Link>
             <UserHeaderMenu
               initialUser={{
                 name: dbUser.name,

@@ -245,7 +245,7 @@ export function SignInForm() {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
         <Loader2 className="size-5 animate-spin text-primary" />
-        <p>{isSignedIn ? "Already signed in. Redirecting..." : "Loading..."}</p>
+        <p>{isSignedIn ? "Redirecting..." : "Loading..."}</p>
       </div>
     );
   }

@@ -3,7 +3,7 @@ import { getOrSyncUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
-import { Home, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SuperAdminPanel } from "@/components/admin/super-admin-panel";
 
@@ -41,12 +41,6 @@ export default async function SuperAdminPage() {
               <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
                 <LayoutDashboard className="size-4" />
                 <span className="hidden sm:inline">Dashboard</span>
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
-                <Home className="size-4" />
-                <span className="hidden sm:inline">Home</span>
               </Button>
             </Link>
             <UserHeaderMenu

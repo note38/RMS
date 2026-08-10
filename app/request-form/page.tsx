@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getOrSyncUser } from "@/lib/auth";
 import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
 import { prisma } from "@/lib/prisma";
-import { Home, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RequestPortalClient, UserRequestSummary } from "@/components/requests/request-portal-client";
 
@@ -84,13 +84,6 @@ export default async function RequestFormPage() {
                 </Button>
               </Link>
             )}
-
-            <Link href="/">
-              <Button variant="outline" size="sm" className="gap-1.5 cursor-pointer">
-                <Home className="size-4" />
-                <span className="hidden sm:inline">Home</span>
-              </Button>
-            </Link>
 
             <UserHeaderMenu
               initialUser={{

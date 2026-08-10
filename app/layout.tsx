@@ -12,6 +12,11 @@ const robotoFlex = Roboto_Flex({
 export const metadata: Metadata = {
   title: 'Request Management System',
   description: 'Request Management System',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 // Global post-sign-in destination — /sync routes by role (admins to

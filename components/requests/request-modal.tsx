@@ -349,6 +349,16 @@ export function RequestModal({
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className={labelCls}>Requirements *</label>
+                <select required name="requirements" className={selectCls}>
+                  <option value="">Select Requirements…</option>
+                  <option value="Valid ID">Valid ID</option>
+                  <option value="Police Request">Police Request</option>
+                  <option value="Contact/Plantilla">Contact/Plantilla</option>
+                </select>
+              </div>
+
               {/* Admin optional fields when admin creates or approves */}
               {isAdmin && (
                 <div className="pt-2 border-t border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
