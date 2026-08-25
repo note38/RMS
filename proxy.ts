@@ -1,29 +1,37 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/sign-in(.*)',
-  '/api/webhooks(.*)',
-]);
+const PUBLIC_PATH_PATTERNS = [
+  /^\/$/,
+  /^\/sign-in($|\/.*)/,
+  /^\/sign-up($|\/.*)/,
+  /^\/api\/webhooks($|\/.*)/,
+  /^\/api\/debug($|\/.*)/,
+  /^\/terms($|\/.*)/,
+  /^\/privacy($|\/.*)/,
+  /^\/\.well-known($|\/.*)/,
+];
+
+function isPublicRoute(pathname: string): boolean {
+  return PUBLIC_PATH_PATTERNS.some((pattern) => pattern.test(pathname));
+}
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
+  const { pathname } = req.nextUrl;
+
   // If the route is not public and user is not authenticated, protect it
-  if (!isPublicRoute(req) && !userId) {
+  if (!isPublicRoute(pathname) && !userId) {
     await auth.protect();
   }
-  // Continue processing
+  
   return NextResponse.next();
 });
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for Clerk's auto-proxy path
     '/__clerk/:path*',
-    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 };

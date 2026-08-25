@@ -1,15 +1,20 @@
-import { getOrSyncUser, isAdminOrSuperAdmin } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
+import { getOrSyncUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
-export default async function SyncPage() {
-  const dbUser = await getOrSyncUser();
+export const dynamic = "force-dynamic";
 
+export default async function SyncPage() {
+  const { userId } = await auth();
+  if (!userId) {
+    redirect("/sign-in");
+  }
+
+  const dbUser = await getOrSyncUser();
   if (!dbUser) {
     redirect("/");
   }
 
-  // Redirect to complete profile if profile has not been explicitly completed
   if (!dbUser.profileCompleted) {
     redirect("/complete-profile");
   }

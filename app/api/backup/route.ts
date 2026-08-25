@@ -15,15 +15,13 @@ export async function GET() {
   const admin = await getSuperAdminUser();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const [repairs, cctvs, internets, users] = await Promise.all([
-    prisma.repairRequest.findMany({ orderBy: { id: "asc" } }),
-    prisma.cctvRequest.findMany({ orderBy: { id: "asc" } }),
-    prisma.internetRequest.findMany({ orderBy: { id: "asc" } }),
-    prisma.user.findMany({
-      select: { id: true, clerkId: true, email: true, name: true, role: true, createdAt: true },
-      orderBy: { id: "asc" },
-    }),
-  ]);
+  const repairs = await prisma.repairRequest.findMany({ orderBy: { id: "asc" } });
+  const cctvs = await prisma.cctvRequest.findMany({ orderBy: { id: "asc" } });
+  const internets = await prisma.internetRequest.findMany({ orderBy: { id: "asc" } });
+  const users = await prisma.user.findMany({
+    select: { id: true, clerkId: true, email: true, name: true, role: true, createdAt: true },
+    orderBy: { id: "asc" },
+  });
 
   const backup = {
     exportedAt: new Date().toISOString(),

@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   FileCheck2,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { AccountForm } from "@/components/profile/account-form";
 
@@ -69,7 +70,24 @@ export function UserHeaderMenu({ initialUser }: UserHeaderMenuProps) {
 
   const handleSignOut = async () => {
     setIsOpen(false);
-    await signOut(() => router.push("/"));
+    setLoadingTarget("/sign-out");
+    try {
+      await signOut(() => router.push("/"));
+    } finally {
+      setLoadingTarget(null);
+    }
+  };
+
+  const [loadingTarget, setLoadingTarget] = useState<string | null>(null);
+
+  const handleNavigate = async (target: string) => {
+    setIsOpen(false);
+    setLoadingTarget(target);
+    try {
+      await router.push(target);
+    } finally {
+      setLoadingTarget(null);
+    }
   };
 
   return (
@@ -144,41 +162,50 @@ export function UserHeaderMenu({ initialUser }: UserHeaderMenuProps) {
               {role === "SUPERADMIN" && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    router.push("/super-admin");
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer"
+                  onClick={() => handleNavigate("/super-admin")}
+                  disabled={!!loadingTarget}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer ${
+                    loadingTarget ? "opacity-70 pointer-events-none" : ""
+                  }`}
                 >
                   <ShieldCheck className="size-4 text-purple-500" />
-                  Super Admin Panel
+                  <span className="flex-1">Super Admin Panel</span>
+                  {loadingTarget === "/super-admin" && (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  )}
                 </button>
               )}
 
               {(role === "ADMIN" || role === "SUPERADMIN") && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    router.push("/dashboard");
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer"
+                  onClick={() => handleNavigate("/dashboard")}
+                  disabled={!!loadingTarget}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer ${
+                    loadingTarget ? "opacity-70 pointer-events-none" : ""
+                  }`}
                 >
                   <LayoutDashboard className="size-4 text-blue-500" />
-                  Admin Dashboard
+                  <span className="flex-1">Admin Dashboard</span>
+                  {loadingTarget === "/dashboard" && (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  )}
                 </button>
               )}
 
               <button
                 type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  router.push("/request-form");
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer"
+                onClick={() => handleNavigate("/request-form")}
+                disabled={!!loadingTarget}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-foreground rounded-lg hover:bg-muted font-medium transition-colors cursor-pointer ${
+                  loadingTarget ? "opacity-70 pointer-events-none" : ""
+                }`}
               >
                 <FileCheck2 className="size-4 text-emerald-500" />
-                Request Portal
+                <span className="flex-1">Request Portal</span>
+                {loadingTarget === "/request-form" && (
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                )}
               </button>
             </div>
 
@@ -187,10 +214,16 @@ export function UserHeaderMenu({ initialUser }: UserHeaderMenuProps) {
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-destructive rounded-lg hover:bg-destructive/10 font-medium transition-colors cursor-pointer"
+                disabled={!!loadingTarget}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-destructive rounded-lg hover:bg-destructive/10 font-medium transition-colors cursor-pointer ${
+                  loadingTarget ? "opacity-70 pointer-events-none" : ""
+                }`}
               >
                 <LogOut className="size-4" />
-                Sign Out
+                <span className="flex-1">Sign Out</span>
+                {loadingTarget === "/sign-out" && (
+                  <Loader2 className="size-4 animate-spin text-destructive" />
+                )}
               </button>
             </div>
           </div>

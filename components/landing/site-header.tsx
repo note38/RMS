@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Show } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { LogIn } from "lucide-react";
 import { UserHeaderMenu } from "@/components/navigation/user-header-menu";
 
@@ -30,15 +30,15 @@ export function SiteHeader() {
         </Link>
 
         <div className="flex items-center gap-3">
-          <Show when="signed-out">
+          <SignedOut>
             <Link href="/sign-in">
               <Button className="cursor-pointer gap-2">
                 <LogIn className="size-4" />
                 Sign In
               </Button>
             </Link>
-          </Show>
-          <Show when="signed-in">
+          </SignedOut>
+          <SignedIn>
             <div className="flex items-center gap-3">
               <Link href="/sync">
                 <Button
@@ -51,7 +51,7 @@ export function SiteHeader() {
               </Link>
               <UserHeaderMenu />
             </div>
-          </Show>
+          </SignedIn>
         </div>
       </div>
     </header>

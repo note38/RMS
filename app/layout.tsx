@@ -34,6 +34,9 @@ export default function RootLayout({
     >
       <html lang="en" className={`${robotoFlex.variable} bg-background`} suppressHydrationWarning>
         <body className="font-sans antialiased" suppressHydrationWarning>
+          {/* Global server-rendered placeholder for Clerk Smart CAPTCHA so the
+              `clerk-captcha` element exists on initial load for all routes. */}
+          <div id="clerk-captcha" className="min-h-[1px]" />
           {children}
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </body>

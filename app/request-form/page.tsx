@@ -16,20 +16,18 @@ export default async function RequestFormPage() {
   }
 
   // Fetch only requests created by this logged-in user
-  const [repairs, cctvs, internets] = await Promise.all([
-    prisma.repairRequest.findMany({
-      where: { createdById: dbUser.id },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.cctvRequest.findMany({
-      where: { createdById: dbUser.id },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.internetRequest.findMany({
-      where: { createdById: dbUser.id },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const repairs = await prisma.repairRequest.findMany({
+    where: { createdById: dbUser.id },
+    orderBy: { createdAt: "desc" },
+  });
+  const cctvs = await prisma.cctvRequest.findMany({
+    where: { createdById: dbUser.id },
+    orderBy: { createdAt: "desc" },
+  });
+  const internets = await prisma.internetRequest.findMany({
+    where: { createdById: dbUser.id },
+    orderBy: { createdAt: "desc" },
+  });
 
   const userRequests: UserRequestSummary[] = [
     ...repairs.map((r) => ({
@@ -39,6 +37,7 @@ export default async function RequestFormPage() {
       requestingOffice: r.requestingOffice,
       date: new Date(r.createdAt).toLocaleDateString(),
       isApproved: Boolean(r.approvedById),
+      details: r,
     })),
     ...cctvs.map((c) => ({
       id: c.id,
@@ -47,6 +46,8 @@ export default async function RequestFormPage() {
       requestingOffice: c.requestingOffice,
       date: new Date(c.createdAt).toLocaleDateString(),
       isApproved: Boolean(c.approvedById),
+      availabilityStatus: c.availabilityStatus,
+      details: c,
     })),
     ...internets.map((i) => ({
       id: i.id,
@@ -55,6 +56,7 @@ export default async function RequestFormPage() {
       requestingOffice: i.requestingOffice,
       date: new Date(i.createdAt).toLocaleDateString(),
       isApproved: Boolean(i.approvedById),
+      details: i,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

@@ -1,13 +1,6 @@
 import { Suspense } from "react";
-import { ShieldCheck } from "lucide-react";
 import { SignInForm } from "./sign-in-form";
 
-/**
- * Custom sign-in page — no sign-up, no Clerk branding.
- * Branding lives in a wrapper card; the Clerk card is transparent inside it.
- * The form (which reads search params for redirect handling) is wrapped in a
- * Suspense boundary so the shell can still be prerendered.
- */
 export default function SignInPage() {
   return (
     <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-4 overflow-hidden">

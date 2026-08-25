@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@/app/generated/prisma/enums";
 
@@ -8,13 +8,59 @@ import { Role } from "@/app/generated/prisma/enums";
  */
 export async function getOrSyncUser() {
   try {
-    const clerkUser = await currentUser();
+    const { userId } = await auth();
+    if (!userId) {
+      return null;
+    }
+
+    let clerkUser = null;
+
+    // Helper for clerkClient fallback
+    const tryGetClerkUser = async () => {
+      const client = await clerkClient();
+      return await client.users.getUser(userId);
+    };
+
+    try {
+      clerkUser = await currentUser({ treatPendingAsSignedOut: true });
+    } catch (error) {
+      // Quiet warning for network / API unreachable
+      console.warn("Clerk currentUser(treatPendingAsSignedOut) unreachable — trying fallback.");
+    }
+
     if (!clerkUser) {
+      try {
+        clerkUser = await currentUser();
+      } catch (error) {
+        console.warn("Clerk currentUser() unreachable — trying clerkClient fallback.");
+      }
+    }
+
+    if (!clerkUser) {
+      try {
+        clerkUser = await tryGetClerkUser();
+      } catch (clerkClientError) {
+        console.warn("Clerk API connection unavailable — attempting database fallback for user:", userId);
+      }
+    }
+
+    // If Clerk API calls failed (e.g. internet connection delay / network timeout),
+    // perform local DB lookup by clerkId to keep the user logged in seamlessly.
+    if (!clerkUser) {
+      try {
+        const fallbackUser = await prisma.user.findFirst({ where: { clerkId: userId } });
+        if (fallbackUser) {
+          return fallbackUser;
+        }
+      } catch (dbErr: any) {
+        console.warn("Database server unreachable (offline/network timeout). Please check internet connection.");
+        return null;
+      }
       return null;
     }
 
     const primaryEmail =
-      clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)
+      clerkUser.emailAddresses.find((e: { id: string; emailAddress: string }) => e.id === clerkUser.primaryEmailAddressId)
         ?.emailAddress ||
       clerkUser.emailAddresses[0]?.emailAddress ||
       `${clerkUser.id}@noemail.com`;
@@ -25,14 +71,13 @@ export async function getOrSyncUser() {
       primaryEmail;
 
     // 1. Try finding existing record by clerkId
-    let dbUser = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findFirst({
       where: { clerkId: clerkUser.id },
     });
 
     if (!dbUser) {
       // 2. If not found by clerkId, check if email matches existing DB user
-      //    Try exact match first, then case-insensitive (ILIKE) as fallback
-      let existingByEmail = await prisma.user.findUnique({
+      let existingByEmail = await prisma.user.findFirst({
         where: { email: primaryEmail },
       });
 
@@ -53,7 +98,6 @@ export async function getOrSyncUser() {
           data: {
             clerkId: clerkUser.id,
             name: hasCustomName ? existingByEmail.name : fullName,
-            // Retain the existing profileCompleted status without auto-flipping
             profileCompleted: existingByEmail.profileCompleted,
           },
         });
@@ -81,14 +125,13 @@ export async function getOrSyncUser() {
         data: {
           email: primaryEmail,
           name: hasCustomName ? dbUser.name : fullName,
-          // Do not auto-flip profileCompleted. Only the completion form does this.
         },
       });
     }
 
     return dbUser;
   } catch (error) {
-    console.error("Error in getOrSyncUser:", error);
+    console.warn("Unable to synchronize user due to network connection timeout.");
     return null;
   }
 }
@@ -102,4 +145,3 @@ export function isSuperAdmin(user: { role: string } | null): boolean {
 export function isAdminOrSuperAdmin(user: { role: string } | null): boolean {
   return user?.role === "ADMIN" || user?.role === "SUPERADMIN";
 }
-

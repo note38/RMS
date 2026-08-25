@@ -19,6 +19,12 @@ export default async function SuperAdminPage() {
     orderBy: { id: "asc" },
   });
 
+  const auditLogs = await prisma.auditLog.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { user: { select: { name: true, email: true } } },
+    take: 500, // Limit to recent logs
+  });
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -64,7 +70,7 @@ export default async function SuperAdminPage() {
           </p>
         </div>
 
-        <SuperAdminPanel users={allUsers} />
+        <SuperAdminPanel users={allUsers} logs={auditLogs} />
       </main>
     </div>
   );
