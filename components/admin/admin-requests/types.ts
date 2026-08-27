@@ -36,6 +36,11 @@ export interface SystemRequest {
   availabilityStatus?: string | null;
 }
 
-export function categoryToTypeKey(category: RequestCategory): "repair" | "cctv" | "internet" {
-  return category === "Repair" ? "repair" : category === "CCTV" ? "cctv" : "internet";
+export function categoryToTypeKey(category: RequestCategory | string): "repair" | "cctv" | "internet" {
+  if (!category) return "internet";
+  const lower = String(category).toLowerCase();
+  if (lower.includes("repair") || lower.includes("tech")) return "repair";
+  if (lower.includes("cctv")) return "cctv";
+  if (lower.includes("internet") || lower.includes("install")) return "internet";
+  return "internet";
 }

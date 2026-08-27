@@ -17,7 +17,7 @@ export function PrintStyles({ category }: PrintStylesProps) {
         @media print {
           @page {
             size: ${isLandscape ? "landscape" : "portrait"};
-            margin: ${isLandscape ? "3mm" : "8mm"};
+            margin: 8mm;
           }
 
           /* Reset root background & force clean container flow */
@@ -58,17 +58,14 @@ export function PrintStyles({ category }: PrintStylesProps) {
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
-            margin: 1rem !important;
-            padding: 0 !important;
+            margin: 0 !important;
+            padding: 2mm !important;
+            box-sizing: border-box !important;
             box-shadow: none !important;
             max-width: 100% !important;
             border-radius: 0 !important;
             background: white !important;
             background-color: white !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            page-break-after: avoid !important;
-            break-after: avoid !important;
           }
 
           .print\\:hidden,
@@ -76,11 +73,32 @@ export function PrintStyles({ category }: PrintStylesProps) {
             display: none !important;
           }
 
+          /* Each Repair copy occupies its own full page */
+          .repair-dual-container {
+            display: block !important;
+            width: 100% !important;
+          }
+          .repair-copy-item {
+            display: block !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .repair-copy-item:first-child {
+            break-after: page !important;
+            page-break-after: always !important;
+          }
+          .repair-second-copy {
+            break-before: page !important;
+            page-break-before: always !important;
+            padding-top: 4mm !important;
+          }
+
           /* Two copies side-by-side for CCTV/Internet */
           .print-columns {
             display: flex !important;
             flex-direction: row !important;
-
             width: 100% !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
@@ -97,13 +115,13 @@ export function PrintStyles({ category }: PrintStylesProps) {
           .print-columns > .copy:last-child {
             width: 50% !important;
             box-sizing: border-box !important;
-            
+            padding-left: 1.5rem !important;
             border-left: 2px dashed #cbd5e1 !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
 
-          /* Multi-page break for 2-page copy layout (Technical Repairs) */
+          /* Multi-page break fallback if needed */
           .print-page-break {
             break-before: page !important;
             page-break-before: always !important;
@@ -116,5 +134,3 @@ export function PrintStyles({ category }: PrintStylesProps) {
     />
   );
 }
-
-

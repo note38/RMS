@@ -102,3 +102,31 @@ export async function updateInternetRequest(id: number, formData: FormData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+// ---------------------------------------------------------------------------
+// Update admin-only fields
+// ---------------------------------------------------------------------------
+
+export async function updateInternetFields(
+  id: number,
+  data: {
+    natureOfRepair?: string;
+    requestingOffice?: string;
+    location?: string;
+    purpose?: string;
+    requestedBy?: string;
+  }
+) {
+  const dbUser = await getOrSyncUser();
+  if (!dbUser || !isAdminOrSuperAdmin(dbUser)) {
+    throw new Error("Unauthorized: Admin privileges required.");
+  }
+
+  await prisma.internetRequest.update({ where: { id }, data });
+
+  await logAudit("UPDATE", "InternetRequest", id, dbUser.id, data);
+  revalidatePath("/dashboard");
+  revalidatePath("/super-admin");
+  revalidatePath("/request-form");
+  return { success: true };
+}

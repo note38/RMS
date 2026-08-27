@@ -62,6 +62,19 @@ export async function updateInternetRequest(id: number, formData: FormData) {
   return internetController.updateInternetRequest(id, formData);
 }
 
+export async function updateInternetFields(
+  id: number,
+  data: {
+    natureOfRepair?: string;
+    requestingOffice?: string;
+    location?: string;
+    purpose?: string;
+    requestedBy?: string;
+  }
+) {
+  return internetController.updateInternetFields(id, data);
+}
+
 // User / admin management actions
 export async function toggleRequestApproval(
   type: "repair" | "cctv" | "internet",

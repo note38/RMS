@@ -10,6 +10,7 @@ interface RequestsTableProps {
   onApproveClick: (request: SystemRequest) => void;
   onEditRepair: (request: SystemRequest) => void;
   onEditCctv: (request: SystemRequest) => void;
+  onEditInternet: (request: SystemRequest) => void;
   onExportPdf: (request: SystemRequest) => void;
   onDelete: (request: SystemRequest) => void;
 }
@@ -20,6 +21,7 @@ export function RequestsTable({
   onApproveClick,
   onEditRepair,
   onEditCctv,
+  onEditInternet,
   onExportPdf,
   onDelete,
 }: RequestsTableProps) {
@@ -58,6 +60,7 @@ export function RequestsTable({
                 onApproveClick={onApproveClick}
                 onEditRepair={onEditRepair}
                 onEditCctv={onEditCctv}
+                onEditInternet={onEditInternet}
                 onExportPdf={onExportPdf}
                 onDelete={onDelete}
               />

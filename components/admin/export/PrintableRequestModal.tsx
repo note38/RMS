@@ -24,7 +24,7 @@ export function PrintableRequestModal({ item, onClose }: PrintableRequestModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto print:static print:inset-auto print:bg-transparent print:backdrop-blur-none print:p-0 print:m-0 print:overflow-visible print-modal-overlay">
-      <div className={`bg-white text-slate-900 w-full ${isLandscape ? "max-w-6xl" : "max-w-3xl"} rounded-xl shadow-2xl overflow-hidden my-8 print:my-0 print:shadow-none print:w-full print:max-w-none print:rounded-none printable-sheet`}>
+      <div className={`bg-white text-slate-900 w-full ${isLandscape ? "max-w-6xl" : "max-w-4xl"} rounded-xl shadow-2xl overflow-hidden my-8 print:my-0 print:shadow-none print:w-full print:max-w-none print:rounded-none printable-sheet`}>
 
         {/* Action Header (hidden in print) */}
         <div className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 print:hidden">
@@ -52,17 +52,17 @@ export function PrintableRequestModal({ item, onClose }: PrintableRequestModalPr
 
         <PrintStyles category={item.category} />
 
-        <div className="p-8 print:p-0 space-y-6 print:space-y-0" id="printable-area">
+        <div className="p-6 print:p-0 space-y-6 print:space-y-0" id="printable-area">
 
           {item.category === "Repair" ? (
-            <div className="space-y-8 print:space-y-0">
-              {/* Page 1: Original / Requester Copy */}
-              <div className="print-page-1">
+            <div className="repair-dual-container">
+              {/* Sheet 1 (Copy 1): Shown on screen preview & printed on Page 1 */}
+              <div className="repair-copy-item">
                 <PrintableSheet item={item} copyLabel="ORIGINAL / REQUESTER COPY" />
               </div>
 
-              {/* Page 2: MIS Technical / Operations Copy (hidden in screen preview, shown on print) */}
-              <div className="hidden print:block print-page-break pt-8 print:pt-0 border-t-2 border-dashed border-slate-300 print:border-none">
+              {/* Sheet 2 (Copy 2): Hidden on screen preview, printed on Page 2 */}
+              <div className="repair-copy-item repair-second-copy hidden print:block">
                 <PrintableSheet item={item} copyLabel="MIS TECHNICAL / OPERATIONS COPY" />
               </div>
             </div>

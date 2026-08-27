@@ -47,14 +47,24 @@ export async function toggleRequestApproval(
 
   if (type === "repair") {
     const item = await prisma.repairRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Request not found.");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     await prisma.repairRequest.update({
       where: { id },
       data: { approvedById: item.approvedById ? null : dbUser.id },
     });
   } else if (type === "cctv") {
     const item = await prisma.cctvRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Request not found.");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     const data: Record<string, unknown> = {
       approvedById: item.approvedById ? null : dbUser.id,
     };
@@ -64,7 +74,12 @@ export async function toggleRequestApproval(
     await prisma.cctvRequest.update({ where: { id }, data });
   } else if (type === "internet") {
     const item = await prisma.internetRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Request not found.");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     await prisma.internetRequest.update({
       where: { id },
       data: { approvedById: item.approvedById ? null : dbUser.id },
@@ -92,19 +107,34 @@ export async function deleteRequest(
 
   if (type === "repair") {
     const item = await prisma.repairRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Not found");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     if (!isAdmin && (item.createdById !== dbUser.id || item.approvedById))
       throw new Error("Unauthorized to delete");
     await prisma.repairRequest.delete({ where: { id } });
   } else if (type === "cctv") {
     const item = await prisma.cctvRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Not found");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     if (!isAdmin && (item.createdById !== dbUser.id || item.approvedById))
       throw new Error("Unauthorized to delete");
     await prisma.cctvRequest.delete({ where: { id } });
   } else if (type === "internet") {
     const item = await prisma.internetRequest.findUnique({ where: { id } });
-    if (!item) throw new Error("Not found");
+    if (!item) {
+      revalidatePath("/dashboard");
+      revalidatePath("/super-admin");
+      revalidatePath("/request-form");
+      return { success: false, error: "Request not found." };
+    }
     if (!isAdmin && (item.createdById !== dbUser.id || item.approvedById))
       throw new Error("Unauthorized to delete");
     await prisma.internetRequest.delete({ where: { id } });

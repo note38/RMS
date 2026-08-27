@@ -20,7 +20,7 @@ function SignatureLine({ label, name, title, align = "left", width = "w-44" }: S
   return (
     <div className={isRight ? "text-right flex flex-col items-end" : undefined}>
       <p className="text-slate-400 uppercase font-semibold text-[10px]">{label}</p>
-      <div className={`mt-6 border-b border-slate-400 ${width}`} />
+      <div className={`mt-6 border-b border-black/30 ${width}`} />
       <p className="font-bold text-slate-800 mt-1">{name || "\u00A0"}</p>
       <p className="text-[10px] text-slate-500">{title}</p>
     </div>
@@ -45,7 +45,7 @@ export function CctvSignatureBlock({ requestedBy }: CctvSignatureBlockProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-8 pt-4 border-t border-slate-200">
+      <div className="grid grid-cols-2 gap-8 pt-4 border-t border-black/30">
         <SignatureLine
           label="Recommending Approval:"
           name={FIXED_APPROVER_NAME}

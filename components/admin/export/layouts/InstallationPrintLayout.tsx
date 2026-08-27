@@ -34,9 +34,9 @@ export function InstallationPrintLayout({ item, copyLabel }: InstallationPrintLa
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
           Installation Request Details
         </h4>
-        <div className="border border-slate-300 rounded overflow-hidden">
+        <div className="border border-black/30 rounded overflow-hidden">
           <table className="w-full text-left text-xs border-collapse">
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-black/30">
               <tr>
                 <td className="p-2.5 font-medium text-slate-600 bg-slate-100 w-1/3">Installation / Work Type</td>
                 <td className="p-2.5 text-slate-900 font-bold">{installationType}</td>
@@ -55,10 +55,10 @@ export function InstallationPrintLayout({ item, copyLabel }: InstallationPrintLa
       </div>
 
       {/* Signature Section */}
-      <div className="pt-6 border-t border-slate-300">
+      <div className="pt-6 border-t border-black/30">
         <InternetSignatureBlock requestedBy={requestedByName} />
 
-        <div className="pt-4 text-center border-t border-slate-200 text-[10px] text-slate-400 mt-4">
+        <div className="pt-4 text-center border-t border-black/30 text-[10px] text-slate-400 mt-4">
           Provincial Capitol Compound, Suklayin, Baler, Aurora 3200 • Network &amp; CCTV Installation Document
         </div>
       </div>

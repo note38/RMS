@@ -50,42 +50,119 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON file." }, { status: 400 });
   }
 
-  if (!backup?.data) {
-    return NextResponse.json({ error: "Invalid backup format." }, { status: 400 });
+  // Handle both { data: { repairs, cctvs, internets } } and root { repairs, cctvs, internets }
+  const data = backup?.data || backup;
+  const repairsList = Array.isArray(data?.repairs) ? data.repairs : [];
+  const cctvsList = Array.isArray(data?.cctvs) ? data.cctvs : [];
+  const internetsList = Array.isArray(data?.internets) ? data.internets : [];
+
+  if (!data || (repairsList.length === 0 && cctvsList.length === 0 && internetsList.length === 0)) {
+    return NextResponse.json(
+      { error: "Invalid backup format. File must contain requests data." },
+      { status: 400 }
+    );
   }
 
   try {
-    // Delete existing requests (preserve users/auth)
-    await prisma.internetRequest.deleteMany();
-    await prisma.cctvRequest.deleteMany();
-    await prisma.repairRequest.deleteMany();
+    // 1. Get existing users to validate foreign keys (createdById, approvedById)
+    const existingUsers = await prisma.user.findMany({ select: { id: true } });
+    const validUserIds = new Set(existingUsers.map((u) => u.id));
 
-    // Restore repair requests
-    for (const r of backup.data.repairs ?? []) {
-      const { id, createdAt, updatedAt, date, ...rest } = r;
-      await prisma.repairRequest.create({
-        data: { ...rest, createdAt: new Date(createdAt) },
-      });
-    }
+    // Fallback user ID if createdById / approvedById does not exist in target DB
+    const fallbackUserId = admin.id;
 
-    // Restore CCTV requests
-    for (const c of backup.data.cctvs ?? []) {
-      const { id, createdAt, updatedAt, ...rest } = c;
-      await prisma.cctvRequest.create({
-        data: { ...rest, createdAt: new Date(createdAt) },
-      });
-    }
+    const resolveUserId = (id: any): number => {
+      if (id && typeof id === "number" && validUserIds.has(id)) {
+        return id;
+      }
+      return fallbackUserId;
+    };
 
-    // Restore internet requests
-    for (const i of backup.data.internets ?? []) {
-      const { id, createdAt, updatedAt, ...rest } = i;
-      await prisma.internetRequest.create({
-        data: { ...rest, createdAt: new Date(createdAt) },
-      });
-    }
+    const resolveOptionalUserId = (id: any): number | null => {
+      if (!id) return null;
+      if (typeof id === "number" && validUserIds.has(id)) {
+        return id;
+      }
+      return fallbackUserId;
+    };
 
-    return NextResponse.json({ success: true, message: "Restore completed successfully." });
+    const restoredCounts = { repairs: 0, cctvs: 0, internets: 0 };
+
+    // 2. Perform atomic restore inside a transaction
+    await prisma.$transaction(
+      async (tx) => {
+        // Delete existing requests
+        await tx.internetRequest.deleteMany();
+        await tx.cctvRequest.deleteMany();
+        await tx.repairRequest.deleteMany();
+
+        // Restore repair requests
+        for (const r of repairsList) {
+          const { id, createdAt, updatedAt, date, createdById, approvedById, createdBy, approvedBy, ...rest } = r;
+          await tx.repairRequest.create({
+            data: {
+              ...rest,
+              createdById: resolveUserId(createdById),
+              approvedById: resolveOptionalUserId(approvedById),
+              date: date ? new Date(date) : new Date(),
+              createdAt: createdAt ? new Date(createdAt) : new Date(),
+              updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+            },
+          });
+          restoredCounts.repairs++;
+        }
+
+        // Restore CCTV requests
+        for (const c of cctvsList) {
+          const { id, createdAt, updatedAt, createdById, approvedById, createdBy, approvedBy, ...rest } = c;
+          await tx.cctvRequest.create({
+            data: {
+              ...rest,
+              createdById: resolveUserId(createdById),
+              approvedById: resolveOptionalUserId(approvedById),
+              createdAt: createdAt ? new Date(createdAt) : new Date(),
+              updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+            },
+          });
+          restoredCounts.cctvs++;
+        }
+
+        // Restore internet requests
+        for (const i of internetsList) {
+          const { id, createdAt, updatedAt, createdById, approvedById, createdBy, approvedBy, ...rest } = i;
+          await tx.internetRequest.create({
+            data: {
+              ...rest,
+              createdById: resolveUserId(createdById),
+              approvedById: resolveOptionalUserId(approvedById),
+              createdAt: createdAt ? new Date(createdAt) : new Date(),
+              updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+            },
+          });
+          restoredCounts.internets++;
+        }
+
+        // Add audit log entry
+        await tx.auditLog.create({
+          data: {
+            action: "RESTORE_BACKUP",
+            entityType: "SystemBackup",
+            entityId: 0,
+            userId: admin.id,
+            details: JSON.stringify(restoredCounts),
+          },
+        });
+      },
+      { timeout: 30000 }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: `Restore completed successfully! Restored ${restoredCounts.repairs} Repair, ${restoredCounts.cctvs} CCTV, and ${restoredCounts.internets} Internet requests.`,
+      counts: restoredCounts,
+    });
   } catch (err: any) {
+    console.error("Restore backup error:", err);
     return NextResponse.json({ error: err.message || "Restore failed." }, { status: 500 });
   }
 }

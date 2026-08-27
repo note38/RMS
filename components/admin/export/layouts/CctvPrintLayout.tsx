@@ -28,12 +28,12 @@ export function CctvPrintLayout({ item, copyLabel }: CctvPrintLayoutProps) {
 
       {/* CCTV Requester & Office Details */}
       <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="border border-slate-300 rounded p-2 bg-slate-50">
+        <div className="border border-black/30 rounded p-2 bg-slate-50">
           <p className="text-[10px] text-slate-500 uppercase font-semibold">Requesting Office / Unit</p>
           <p className="font-bold text-slate-900 text-sm">{item.requestingOffice || "N/A"}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Location: {location}</p>
         </div>
-        <div className="border border-slate-300 rounded p-2 bg-slate-50">
+        <div className="border border-black/30 rounded p-2 bg-slate-50">
           <p className="text-[10px] text-slate-500 uppercase font-semibold">Requesting Party</p>
           <p className="font-bold text-slate-900 text-sm">{requestingParty}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">Address: {address}</p>
@@ -45,9 +45,9 @@ export function CctvPrintLayout({ item, copyLabel }: CctvPrintLayoutProps) {
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
           CCTV Footage &amp; Playback Specifications
         </h4>
-        <div className="border border-slate-300 rounded overflow-hidden">
+        <div className="border border-black/30 rounded overflow-hidden">
           <table className="w-full text-left text-xs border-collapse">
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-black/30">
               <tr>
                 <td className="p-2 font-medium text-slate-600 bg-slate-100 w-1/3">Request Type</td>
                 <td className="p-2 text-slate-900 font-bold uppercase">{requestType}</td>
@@ -82,10 +82,10 @@ export function CctvPrintLayout({ item, copyLabel }: CctvPrintLayoutProps) {
       </div>
 
       {/* Official 5-Signature Block */}
-      <div className="pt-3 border-t border-slate-300">
+      <div className="pt-3 border-t border-black/30">
         <CctvSignatureBlock requestedBy={requestingParty} />
 
-        <div className="pt-2 text-center border-t border-slate-200 text-[10px] text-slate-400 mt-2">
+        <div className="pt-2 text-center border-t border-black/30 text-[10px] text-slate-400 mt-2">
           Provincial Capitol Compound, Suklayin, Baler, Aurora 3200 • CCTV Command Center Official Document
         </div>
       </div>

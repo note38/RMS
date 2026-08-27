@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { SystemRequest } from "@/components/admin/admin-requests/types";
 import { normalizeRepair, normalizeCctv, normalizeInternet } from "./normalizers";
-import { unstable_cache } from "next/cache";
 
 export interface DashboardCounts {
   repairs: number;
@@ -25,7 +24,7 @@ export interface DashboardData {
 /**
  * Raw data fetcher retrieving all requests for export & pagination
  */
-async function fetchDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(): Promise<DashboardData> {
   const repairs = await prisma.repairRequest.findMany({
     include: { createdBy: true, approvedBy: true },
     orderBy: { createdAt: "desc" },
@@ -58,15 +57,3 @@ async function fetchDashboardData(): Promise<DashboardData> {
     users,
   };
 }
-
-/**
- * Cached version of getDashboardData using Next.js unstable_cache
- */
-export const getDashboardData = unstable_cache(
-  async () => fetchDashboardData(),
-  ["admin-dashboard-data-v2"],
-  {
-    revalidate: 30, // Revalidate cache every 30 seconds
-    tags: ["dashboard-data"],
-  }
-);

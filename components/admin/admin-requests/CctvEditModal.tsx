@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateCctvFields } from "@/lib/actions";
@@ -17,6 +18,7 @@ const selectCls = `${inputCls} cursor-pointer`;
 const labelCls = "text-xs font-semibold text-muted-foreground uppercase tracking-wide";
 
 export function CctvEditModal({ request, onClose }: CctvEditModalProps) {
+  const router = useRouter();
   const [requestType, setRequestType] = useState(
     request.requestType || request.details["Nature of Request"] || "Playback Viewing Only"
   );
@@ -53,6 +55,7 @@ export function CctvEditModal({ request, onClose }: CctvEditModalProps) {
         timeOfFootage,
         purpose,
       });
+      router.refresh();
       onClose();
     } catch (e: any) {
       setError(e.message || "Failed to save.");

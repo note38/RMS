@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createAdminUser, deleteAdminUser, updateUserName } from "@/lib/actions";
 
@@ -34,7 +35,8 @@ interface SuperAdminPanelProps {
 }
 
 export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }: SuperAdminPanelProps) {
-  const [users, setUsers] = useState(initialUsers);
+  const router = useRouter();
+  const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [logs, setLogs] = useState<any[]>(initialLogs);
 
   const [activeTab, setActiveTab] = useState<"Users" | "Logs">("Users");
@@ -64,7 +66,13 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
     setRestoreMsg("");
     try {
       const text = await file.text();
-      const json = JSON.parse(text);
+      let json: any;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON file formatting.");
+      }
+
       const res = await fetch("/api/backup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,7 +80,8 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Restore failed.");
-      setRestoreMsg("✅ Restore completed successfully! Refresh to see changes.");
+      setRestoreMsg(`✅ ${data.message || "Restore completed successfully!"}`);
+      router.refresh();
     } catch (err: any) {
       setRestoreMsg(`❌ ${err.message}`);
     } finally {

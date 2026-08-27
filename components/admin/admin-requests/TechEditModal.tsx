@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateRepairTechnicianFields } from "@/lib/actions";
@@ -12,6 +13,7 @@ interface TechEditModalProps {
 }
 
 export function TechEditModal({ request, onClose }: TechEditModalProps) {
+  const router = useRouter();
   const [findings, setFindings] = useState(request.technicianFindings ?? "");
   const [recommendation, setRecommendation] = useState(request.technicianRecommendation ?? "");
   const [saving, setSaving] = useState(false);
@@ -22,6 +24,7 @@ export function TechEditModal({ request, onClose }: TechEditModalProps) {
     setError("");
     try {
       await updateRepairTechnicianFields(request.id, findings, recommendation);
+      router.refresh();
       onClose();
     } catch (e: any) {
       setError(e.message || "Failed to save.");

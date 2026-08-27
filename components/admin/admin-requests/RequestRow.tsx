@@ -12,6 +12,7 @@ interface RequestRowProps {
   onApproveClick: (request: SystemRequest) => void;
   onEditRepair: (request: SystemRequest) => void;
   onEditCctv: (request: SystemRequest) => void;
+  onEditInternet: (request: SystemRequest) => void;
   onExportPdf: (request: SystemRequest) => void;
   onDelete: (request: SystemRequest) => void;
 }
@@ -22,6 +23,7 @@ export function RequestRow({
   onApproveClick,
   onEditRepair,
   onEditCctv,
+  onEditInternet,
   onExportPdf,
   onDelete,
 }: RequestRowProps) {
@@ -89,6 +91,18 @@ export function RequestRow({
               variant="outline"
               onClick={() => onEditCctv(req)}
               className="cursor-pointer text-xs h-8 px-2.5 gap-1 text-purple-600 border-purple-200 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+            >
+              <Pencil className="size-3.5" />
+              Edit
+            </Button>
+          )}
+
+          {req.category === "Internet" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onEditInternet(req)}
+              className="cursor-pointer text-xs h-8 px-2.5 gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
             >
               <Pencil className="size-3.5" />
               Edit

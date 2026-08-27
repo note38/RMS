@@ -48,7 +48,7 @@ export function RepairPrintLayout({ item, copyLabel }: RepairPrintLayoutProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 print:space-y-4">
       {/* Letterhead Header */}
       <DocumentLetterhead seriesNo={item.seriesNo} date={item.date} category="Repair" copyLabel={copyLabel} />
 
@@ -61,27 +61,34 @@ export function RepairPrintLayout({ item, copyLabel }: RepairPrintLayoutProps) {
       />
 
       {/* Equipment Specifications Grid */}
-      <div className="space-y-2 mt-3">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+      <div className="space-y-2 mt-4 print:mt-3">
+        <h4 className="text-sm print:text-xs font-bold uppercase tracking-wider text-slate-700">
           Equipment &amp; Repair Specifications
         </h4>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {REPAIR_KEYS.map((key) => (
-            <div key={key} className="border border-slate-200 rounded p-2 bg-slate-50">
-              <p className="text-[10px] text-slate-500 uppercase font-semibold">{key}</p>
-              <p className="font-bold text-slate-900 text-sm">{getDetailValue(key)}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-3 print:gap-2.5 text-sm print:text-xs">
+          {REPAIR_KEYS.map((key) => {
+            const isFullWidth = key === "Nature of Repair" || key === "Action Type Requested";
+            return (
+              <div
+                key={key}
+                className={`border border-black/30 rounded p-3 print:p-2 bg-slate-50 ${isFullWidth ? "col-span-2" : ""
+                  }`}
+              >
+                <p className="text-xs print:text-[10px] text-slate-500 uppercase font-semibold">{key}</p>
+                <p className="font-bold text-slate-900 text-base print:text-sm mt-0.5">{getDetailValue(key)}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Inspection & Technician Findings Section */}
       {hasInspectionData && (
-        <div className="border border-slate-300 rounded overflow-hidden mt-3">
-          <div className="bg-slate-200 text-slate-800 px-3 py-1.5 font-bold text-xs uppercase tracking-wider">
+        <div className="border border-black/30 rounded overflow-hidden mt-4 print:mt-3">
+          <div className="bg-slate-200 text-slate-800 px-4 py-2 print:py-1.5 font-bold text-xs print:text-[11px] uppercase tracking-wider">
             Technical Inspection &amp; Diagnosis Notes
           </div>
-          <div className="p-3 bg-white space-y-2 text-xs">
+          <div className="p-3.5 print:p-3 bg-white space-y-2 print:space-y-1.5 text-sm print:text-xs">
             {preInspection && (
               <div>
                 <span className="font-semibold text-slate-700">Pre-Inspection: </span>
@@ -95,13 +102,13 @@ export function RepairPrintLayout({ item, copyLabel }: RepairPrintLayoutProps) {
               </div>
             )}
             {technicianFindings && (
-              <div className="bg-blue-50 border-l-2 border-blue-500 p-2 rounded-r">
+              <div className="bg-blue-50 border-l-3 border-blue-500 p-2.5 print:p-2 rounded-r">
                 <span className="font-bold text-blue-900">Technician Findings: </span>
                 <span className="text-slate-900">{technicianFindings}</span>
               </div>
             )}
             {technicianRecommendation && (
-              <div className="bg-emerald-50 border-l-2 border-emerald-500 p-2 rounded-r">
+              <div className="bg-emerald-50 border-l-3 border-emerald-500 p-2.5 print:p-2 rounded-r">
                 <span className="font-bold text-emerald-900">Technician Recommendation: </span>
                 <span className="text-slate-900">{technicianRecommendation}</span>
               </div>
@@ -117,14 +124,14 @@ export function RepairPrintLayout({ item, copyLabel }: RepairPrintLayoutProps) {
       )}
 
       {/* Signature Section */}
-      <div className="pt-6 border-t border-slate-300">
+      <div className="pt-6 print:pt-18 border-t border-black/30">
         <RepairSignatureBlock
           preparedByName={item.createdBy.name || item.requestedBy}
           technicianName={technicianName}
           isApproved={item.isApproved}
         />
 
-        <div className="pt-4 text-center border-t border-slate-200 text-[10px] text-slate-400 mt-4">
+        <div className="pt-4 print:pt-8 text-center border-t border-black/30 text-xs print:text-[10px] text-slate-400 mt-6 print:mt-4">
           Provincial Capitol Compound, Suklayin, Baler, Aurora 3200 • MIS Technical Repair Service Document
         </div>
       </div>
