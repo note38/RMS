@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/users/[id]
- * Demote a user from ADMIN back to REQUESTER (super admin only).
+ * Permanently delete a user account (super admin only).
  * URL param: id (user DB id)
  */
 export async function DELETE(

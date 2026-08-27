@@ -1,8 +1,13 @@
 import Link from "next/link"
 import { ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import type { SystemRequest } from "@/components/admin/admin-requests/types"
 
-export function Hero() {
+interface HeroProps {
+    recentRequests?: SystemRequest[]
+}
+
+export function Hero({ recentRequests = [] }: HeroProps) {
     return (
         <section className="relative overflow-hidden border-b border-border">
             <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:py-28">
@@ -32,24 +37,33 @@ export function Hero() {
                 </div>
 
                 <div className="relative">
-                    <HeroPreview />
+                    <HeroPreview requests={recentRequests} />
                 </div>
             </div>
         </section>
     )
 }
 
-function HeroPreview() {
-    const rows = [
+function HeroPreview({ requests = [] }: { requests?: SystemRequest[] }) {
+    const defaultRows = [
         { series: "RR-2026-0142", type: "Repair", office: "Records Office", status: "Approved" },
         { series: "CV-2026-0088", type: "CCTV", office: "Security", status: "Pending" },
-        { series: "IN-2026-0031", type: "Internet", office: "Accounting", status: "In review" },
+        { series: "IN-2026-0031", type: "Internet", office: "Accounting", status: "Approved" },
     ]
 
+    const rows = requests.length > 0
+        ? requests.slice(0, 3).map((req) => ({
+            series: req.seriesNo,
+            type: req.category,
+            office: req.requestingOffice || "Capitol Office",
+            status: req.isApproved ? "Approved" : "Pending",
+        }))
+        : defaultRows
+
     const statusStyles: Record<string, string> = {
-        Approved: "bg-primary/10 text-primary",
-        Pending: "bg-muted text-muted-foreground",
-        "In review": "bg-accent text-accent-foreground",
+        Approved: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold",
+        Pending: "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold",
+        "In review": "bg-blue-500/15 text-blue-700 dark:text-blue-400 font-semibold",
     }
 
     return (
@@ -68,7 +82,7 @@ function HeroPreview() {
                             </span>
                         </div>
                         <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[row.status]}`}
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[row.status] || "bg-muted text-muted-foreground"}`}
                         >
                             {row.status}
                         </span>

@@ -17,6 +17,7 @@ import {
   ChevronRight,
   AlertTriangle,
   CheckCircle2,
+  Search,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,8 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
 
   const [activeTab, setActiveTab] = useState<"Users" | "Logs">("Users");
   const [usersPage, setUsersPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [logsPage, setLogsPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -133,41 +136,37 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
     }
   };
 
-  // ── Demote Admin ──────────────────────────────────────────────────────────
-  const [demotingId, setDemotingId] = useState<number | null>(null);
-  const [demoteTarget, setDemoteTarget] = useState<UserRow | null>(null);
-  const [demoteError, setDemoteError] = useState("");
-  const [demoteMsg, setDemoteMsg] = useState("");
+  // ── Delete Admin Account ──────────────────────────────────────────────────
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteMsg, setDeleteMsg] = useState("");
 
-  const confirmDemote = async () => {
-    if (!demoteTarget) return;
-    setDemotingId(demoteTarget.id);
-    setDemoteError("");
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
+    setDeleteError("");
     try {
-      const result = await deleteAdminUser(demoteTarget.id);
-      const name = demoteTarget.name || demoteTarget.email;
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === demoteTarget.id ? { ...u, role: "REQUESTER" } : u
-        )
-      );
+      const result = await deleteAdminUser(deleteTarget.id);
+      const name = deleteTarget.name || deleteTarget.email;
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       // Prepend a log entry optimistically
       setLogs((prev) => [{
         id: Date.now(),
-        action: "DEMOTE_ADMIN",
+        action: "DELETE_USER",
         entityType: "user",
-        entityId: demoteTarget.id,
+        entityId: deleteTarget.id,
         createdAt: new Date().toISOString(),
         user: result.actor,
         details: JSON.stringify({ targetName: result.target.name, targetEmail: result.target.email }),
       }, ...prev]);
-      setDemoteTarget(null);
-      setDemoteMsg(`${name} has been demoted to a regular user.`);
-      setTimeout(() => setDemoteMsg(""), 4000);
+      setDeleteTarget(null);
+      setDeleteMsg(`${name}'s account has been permanently deleted.`);
+      setTimeout(() => setDeleteMsg(""), 4000);
     } catch (e: any) {
-      setDemoteError(e.message || "Failed to demote user.");
+      setDeleteError(e.message || "Failed to delete user account.");
     } finally {
-      setDemotingId(null);
+      setDeletingId(null);
     }
   };
 
@@ -199,18 +198,25 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
     }
   };
 
-  const adminUsers = users.filter((u) => u.role === "ADMIN" || u.role === "SUPERADMIN");
+  const baseAdminUsers = users.filter((u) => u.role === "ADMIN" || u.role === "SUPERADMIN");
+  const adminUsers = baseAdminUsers.filter((u) => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase();
+    const nameStr = (u.name || "").toLowerCase();
+    const emailStr = (u.email || "").toLowerCase();
+    return nameStr.includes(q) || emailStr.includes(q);
+  });
 
   return (
     <div className="space-y-8">
 
-      {/* ── Demote Confirmation Modal ──────────────────────────────────────── */}
-      {demoteTarget && (
+      {/* ── Delete Confirmation Modal ──────────────────────────────────────── */}
+      {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => { setDemoteTarget(null); setDemoteError(""); }}
+            onClick={() => { setDeleteTarget(null); setDeleteError(""); }}
           />
           {/* Dialog */}
           <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
@@ -220,9 +226,9 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
                 <AlertTriangle className="size-5 text-destructive" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-foreground">Demote Admin</h3>
+                <h3 className="text-base font-bold text-foreground">Delete Account</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  This will remove admin privileges from this user.
+                  This will permanently delete this user account.
                 </p>
               </div>
             </div>
@@ -230,21 +236,21 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
             {/* User info card */}
             <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 space-y-1">
               <p className="text-sm font-semibold text-foreground">
-                {demoteTarget.name || "—"}
+                {deleteTarget.name || "—"}
               </p>
-              <p className="text-xs text-muted-foreground">{demoteTarget.email}</p>
+              <p className="text-xs text-muted-foreground">{deleteTarget.email}</p>
               <span className="inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary mt-1">
-                {demoteTarget.role}
+                {deleteTarget.role}
               </span>
             </div>
 
             <p className="text-sm text-muted-foreground">
-              They will be demoted to a <span className="font-semibold text-foreground">regular user</span> and will lose all admin access immediately.
+              This will <span className="font-semibold text-destructive">permanently delete</span> this account from both the database and authentication system. This action cannot be undone.
             </p>
 
-            {demoteError && (
+            {deleteError && (
               <p className="text-xs font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
-                {demoteError}
+                {deleteError}
               </p>
             )}
 
@@ -253,8 +259,8 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { setDemoteTarget(null); setDemoteError(""); }}
-                disabled={!!demotingId}
+                onClick={() => { setDeleteTarget(null); setDeleteError(""); }}
+                disabled={!!deletingId}
                 className="cursor-pointer"
               >
                 Cancel
@@ -262,30 +268,30 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={confirmDemote}
-                disabled={!!demotingId}
+                onClick={confirmDelete}
+                disabled={!!deletingId}
                 className="gap-2 cursor-pointer"
               >
-                {demotingId ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
-                {demotingId ? "Demoting…" : "Demote to User"}
+                {deletingId ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+                {deletingId ? "Deleting…" : "Delete Account"}
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Success Toast (Demote) ──────────────────────────────────────── */}
-      {demoteMsg && (
+      {/* ── Success Toast (Delete) ──────────────────────────────────────── */}
+      {deleteMsg && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-card px-5 py-3.5 shadow-2xl shadow-black/20 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0">
             <CheckCircle2 className="size-4 text-emerald-500" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">Admin Demoted</p>
-            <p className="text-xs text-muted-foreground">{demoteMsg}</p>
+            <p className="text-sm font-semibold text-foreground">Account Deleted</p>
+            <p className="text-xs text-muted-foreground">{deleteMsg}</p>
           </div>
           <button
-            onClick={() => setDemoteMsg("")}
+            onClick={() => setDeleteMsg("")}
             className="ml-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <X className="size-4" />
@@ -295,7 +301,7 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
 
       {/* ── Success Toast (Promote) ─────────────────────────────────────── */}
       {addToast && (
-        <div className={`fixed right-6 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-card px-5 py-3.5 shadow-2xl shadow-black/20 animate-in slide-in-from-bottom-4 fade-in duration-300 ${demoteMsg ? "bottom-24" : "bottom-6"}`}>
+        <div className={`fixed right-6 z-[60] flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-card px-5 py-3.5 shadow-2xl shadow-black/20 animate-in slide-in-from-bottom-4 fade-in duration-300 ${deleteMsg ? "bottom-24" : "bottom-6"}`}>
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/10 shrink-0">
             <CheckCircle2 className="size-4 text-emerald-500" />
           </div>
@@ -425,12 +431,54 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
 
           {/* ── Admin Users Table ─────────────────────────────────────────────── */}
           <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-            <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
-              <ShieldCheck className="size-5 text-primary" />
-              <h3 className="text-base font-bold text-foreground">Admin Users</h3>
-              <span className="ml-auto text-xs text-muted-foreground font-medium">
-                {adminUsers.length} admins
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="size-5 text-primary" />
+                <h3 className="text-base font-bold text-foreground">Admin Users</h3>
+                <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded-full">
+                  {adminUsers.length} admins
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Search Input */}
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={(e) => {
+                      setUserSearchQuery(e.target.value);
+                      setUsersPage(1);
+                    }}
+                    placeholder="Search admin name or email..."
+                    className="w-full pl-8 pr-3 py-1.5 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  {userSearchQuery && (
+                    <button
+                      onClick={() => setUserSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Items Per Page Select */}
+                <select
+                  value={usersPerPage}
+                  onChange={(e) => {
+                    setUsersPerPage(Number(e.target.value));
+                    setUsersPage(1);
+                  }}
+                  className="px-2 py-1.5 bg-background border border-border rounded-lg text-xs text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                >
+                  <option value={5}>5 / page</option>
+                  <option value={10}>10 / page</option>
+                  <option value={20}>20 / page</option>
+                  <option value={50}>50 / page</option>
+                </select>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -447,95 +495,104 @@ export function SuperAdminPanel({ users: initialUsers, logs: initialLogs = [] }:
                   {adminUsers.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="p-8 text-center text-muted-foreground text-xs italic">
-                        No admin users yet.
+                        {userSearchQuery ? "No admin users matching your search." : "No admin users yet."}
                       </td>
                     </tr>
                   ) : (
-                    adminUsers.slice((usersPage - 1) * itemsPerPage, usersPage * itemsPerPage).map((user) => (
-                      <tr key={user.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-4">
-                          {editingId === user.id ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                                placeholder="First"
-                                className="px-2 py-1 bg-background border border-border rounded-md text-xs w-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                              <input
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                                placeholder="Last"
-                                className="px-2 py-1 bg-background border border-border rounded-md text-xs w-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                              />
-                            </div>
-                          ) : (
-                            <span className="font-semibold text-foreground">{user.name || "—"}</span>
-                          )}
-                        </td>
-                        <td className="p-4 text-muted-foreground text-xs">{user.email}</td>
-                        <td className="p-4">
-                          <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${user.role === "SUPERADMIN"
-                            ? "bg-amber-500/10 text-amber-600"
-                            : "bg-primary/10 text-primary"
-                            }`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                    (() => {
+                      const totalPages = Math.max(1, Math.ceil(adminUsers.length / usersPerPage));
+                      const safePage = Math.min(usersPage, totalPages);
+                      const start = (safePage - 1) * usersPerPage;
+                      return adminUsers.slice(start, start + usersPerPage).map((user) => (
+                        <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="p-4">
                             {editingId === user.id ? (
-                              <>
-                                <Button size="sm" disabled={saving} onClick={() => saveEdit(user.id)} className="h-7 px-2 gap-1 cursor-pointer">
-                                  {saving ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
-                                  Save
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7 px-2 cursor-pointer">
-                                  <X className="size-3" />
-                                </Button>
-                              </>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  value={firstName}
+                                  onChange={(e) => setFirstName(e.target.value)}
+                                  placeholder="First"
+                                  className="px-2 py-1 bg-background border border-border rounded-md text-xs w-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                                <input
+                                  value={lastName}
+                                  onChange={(e) => setLastName(e.target.value)}
+                                  placeholder="Last"
+                                  className="px-2 py-1 bg-background border border-border rounded-md text-xs w-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                />
+                              </div>
                             ) : (
-                              <>
-                                <Button size="sm" variant="outline" onClick={() => startEdit(user)} className="h-7 px-2 gap-1 cursor-pointer">
-                                  <Pencil className="size-3" />
-                                  Edit
-                                </Button>
-                                {/* Don't allow demoting SUPERADMIN */}
-                                {user.role === "ADMIN" && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    disabled={demotingId === user.id}
-                                    onClick={() => { setDemoteTarget(user); setDemoteError(""); }}
-                                    className="h-7 w-7 p-0 cursor-pointer text-destructive hover:bg-destructive/10"
-                                  >
-                                    {demotingId === user.id
-                                      ? <Loader2 className="size-3 animate-spin" />
-                                      : <Trash2 className="size-3" />
-                                    }
-                                  </Button>
-                                )}
-                              </>
+                              <span className="font-semibold text-foreground">{user.name || "—"}</span>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="p-4 text-muted-foreground text-xs">{user.email}</td>
+                          <td className="p-4">
+                            <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${user.role === "SUPERADMIN"
+                              ? "bg-amber-500/10 text-amber-600"
+                              : "bg-primary/10 text-primary"
+                              }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {editingId === user.id ? (
+                                <>
+                                  <Button size="sm" disabled={saving} onClick={() => saveEdit(user.id)} className="h-7 px-2 gap-1 cursor-pointer">
+                                    {saving ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                    Save
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={cancelEdit} className="h-7 px-2 cursor-pointer">
+                                    <X className="size-3" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button size="sm" variant="outline" onClick={() => startEdit(user)} className="h-7 px-2 gap-1 cursor-pointer">
+                                    <Pencil className="size-3" />
+                                    Edit
+                                  </Button>
+                                  {/* Don't allow deleting SUPERADMIN */}
+                                  {user.role === "ADMIN" && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      disabled={deletingId === user.id}
+                                      onClick={() => { setDeleteTarget(user); setDeleteError(""); }}
+                                      className="h-7 w-7 p-0 cursor-pointer text-destructive hover:bg-destructive/10"
+                                      title="Delete user account permanently"
+                                    >
+                                      {deletingId === user.id
+                                        ? <Loader2 className="size-3 animate-spin" />
+                                        : <Trash2 className="size-3" />
+                                      }
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()
                   )}
                 </tbody>
               </table>
             </div>
 
-            {adminUsers.length > itemsPerPage && (
+            {adminUsers.length > 0 && (
               <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/20">
                 <span className="text-xs text-muted-foreground">
-                  Showing {(usersPage - 1) * itemsPerPage + 1} to {Math.min(usersPage * itemsPerPage, adminUsers.length)} of {adminUsers.length}
+                  Showing {Math.min((usersPage - 1) * usersPerPage + 1, adminUsers.length)} to {Math.min(usersPage * usersPerPage, adminUsers.length)} of {adminUsers.length} admins
                 </span>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setUsersPage(p => Math.max(1, p - 1))} disabled={usersPage === 1}>
+                  <span className="text-xs text-muted-foreground mr-2 font-medium">
+                    Page {Math.min(usersPage, Math.ceil(adminUsers.length / usersPerPage))} of {Math.ceil(adminUsers.length / usersPerPage)}
+                  </span>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 cursor-pointer" onClick={() => setUsersPage(p => Math.max(1, p - 1))} disabled={usersPage === 1}>
                     <ChevronLeft className="size-4" />
                   </Button>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => setUsersPage(p => Math.min(Math.ceil(adminUsers.length / itemsPerPage), p + 1))} disabled={usersPage === Math.ceil(adminUsers.length / itemsPerPage)}>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0 cursor-pointer" onClick={() => setUsersPage(p => Math.min(Math.ceil(adminUsers.length / usersPerPage), p + 1))} disabled={usersPage >= Math.ceil(adminUsers.length / usersPerPage)}>
                     <ChevronRight className="size-4" />
                   </Button>
                 </div>

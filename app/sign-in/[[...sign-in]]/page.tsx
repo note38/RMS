@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { SignInForm } from "./sign-in-form";
 
@@ -22,14 +23,18 @@ export default function SignInPage() {
       >
         {/* ── Branding header (inside the card) ─────────────────────── */}
         <div className="flex flex-col space-y-1.5 p-6">
-          <div className="flex justify-center mb-2">
-            <div className="size-16 rounded-full bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center overflow-hidden">
+          <div className="flex justify-center mb-3">
+            <Link
+              href="/"
+              className="size-21 rounded-full bg-primary/10 ring-1 ring-primary/20 flex items-center justify-center overflow-hidden transition-transform hover:scale-105 cursor-pointer shadow-sm"
+              title="Return to Home Page"
+            >
               <img
                 src="/logo.png"
                 alt="MIS / CCTV Command Center Logo"
-                className="size-10 object-contain"
+                className="size-20 object-contain"
               />
-            </div>
+            </Link>
           </div>
           <h1 className="font-semibold leading-none tracking-tight text-2xl text-center">
             MIS / CCTV Command Center

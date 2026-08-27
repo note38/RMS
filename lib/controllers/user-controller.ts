@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getOrSyncUser, isAdminOrSuperAdmin, isSuperAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { Role } from "@/app/generated/prisma/enums";
+import { clerkClient } from "@clerk/nextjs/server";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -217,9 +218,8 @@ export async function createAdminUser(email: string, name: string) {
     actor: { name: dbUser.name, email: dbUser.email },
   };
 }
-
 // ---------------------------------------------------------------------------
-// Demote ADMIN back to REQUESTER (super admin only)
+// Permanently Delete User Account (super admin only)
 // ---------------------------------------------------------------------------
 
 export async function deleteAdminUser(userId: number) {
@@ -237,29 +237,61 @@ export async function deleteAdminUser(userId: number) {
     throw new Error("Unauthorized: Super Admin privileges required.");
   }
   if (userId === dbUser.id) {
-    throw new Error("You cannot demote yourself.");
+    throw new Error("You cannot delete your own account.");
   }
 
-  // Look up the target user before demoting (for audit details)
+  // Look up target user before deleting
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true },
+    select: { id: true, clerkId: true, name: true, email: true, role: true },
   });
 
-  await prisma.user.update({
+  if (!targetUser) {
+    throw new Error("User account not found.");
+  }
+
+  if (targetUser.role === Role.SUPERADMIN) {
+    throw new Error("Cannot delete a Super Admin account.");
+  }
+
+  // 1. Delete user from Clerk if clerkId is active
+  if (targetUser.clerkId && !targetUser.clerkId.startsWith("pending-")) {
+    try {
+      const client = await clerkClient();
+      await client.users.deleteUser(targetUser.clerkId);
+    } catch (clerkErr) {
+      console.warn("Could not delete user from Clerk (may already be deleted or unreachable):", clerkErr);
+    }
+  }
+
+  // 2. Clean up foreign key references in Prisma before deleting the user row
+  // Reassign created requests to current Super Admin so records are not lost
+  await prisma.repairRequest.updateMany({ where: { createdById: userId }, data: { createdById: dbUser.id } });
+  await prisma.cctvRequest.updateMany({ where: { createdById: userId }, data: { createdById: dbUser.id } });
+  await prisma.internetRequest.updateMany({ where: { createdById: userId }, data: { createdById: dbUser.id } });
+
+  // Clear approvedById references
+  await prisma.repairRequest.updateMany({ where: { approvedById: userId }, data: { approvedById: null } });
+  await prisma.cctvRequest.updateMany({ where: { approvedById: userId }, data: { approvedById: null } });
+  await prisma.internetRequest.updateMany({ where: { approvedById: userId }, data: { approvedById: null } });
+
+  // Clear audit log entries associated with this user
+  await prisma.auditLog.deleteMany({ where: { userId: userId } });
+
+  // 3. Delete user row from database
+  await prisma.user.delete({
     where: { id: userId },
-    data: { role: Role.REQUESTER },
   });
 
-  await logAudit("DEMOTE_ADMIN", "user", userId, dbUser.id, {
-    targetName: targetUser?.name,
-    targetEmail: targetUser?.email,
+  await logAudit("DELETE_USER", "user", userId, dbUser.id, {
+    targetName: targetUser.name,
+    targetEmail: targetUser.email,
   });
 
   revalidatePath("/super-admin");
   return {
     success: true,
     actor: { name: dbUser.name, email: dbUser.email },
-    target: { name: targetUser?.name ?? null, email: targetUser?.email ?? "" },
+    target: { name: targetUser.name ?? null, email: targetUser.email ?? "" },
   };
 }
