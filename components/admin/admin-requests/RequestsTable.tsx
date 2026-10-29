@@ -11,6 +11,7 @@ interface RequestsTableProps {
   onEditRepair: (request: SystemRequest) => void;
   onEditCctv: (request: SystemRequest) => void;
   onEditInternet: (request: SystemRequest) => void;
+  onNotifyPickup: (request: SystemRequest) => void;
   onExportPdf: (request: SystemRequest) => void;
   onDelete: (request: SystemRequest) => void;
 }
@@ -22,6 +23,7 @@ export function RequestsTable({
   onEditRepair,
   onEditCctv,
   onEditInternet,
+  onNotifyPickup,
   onExportPdf,
   onDelete,
 }: RequestsTableProps) {
@@ -61,6 +63,7 @@ export function RequestsTable({
                 onEditRepair={onEditRepair}
                 onEditCctv={onEditCctv}
                 onEditInternet={onEditInternet}
+                onNotifyPickup={onNotifyPickup}
                 onExportPdf={onExportPdf}
                 onDelete={onDelete}
               />

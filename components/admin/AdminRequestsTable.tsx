@@ -13,6 +13,7 @@ import { CctvEditModal } from "./admin-requests/CctvEditModal";
 import { TechEditModal } from "./admin-requests/TechEditModal";
 import { InternetEditModal } from "./admin-requests/InternetEditModal";
 import { DeleteRequestModal } from "./admin-requests/DeleteRequestModal";
+import { RepairPickupModal } from "./admin-requests/RepairPickupModal";
 import { useRequestFilters } from "./admin-requests/useRequestFilters";
 import { categoryToTypeKey } from "./admin-requests/types";
 import type { SystemRequest, RequestCategory } from "./admin-requests/types";
@@ -44,6 +45,7 @@ export function AdminRequestsTable({ initialRequests }: AdminRequestsTableProps)
   const [internetEditingRequest, setInternetEditingRequest] = useState<SystemRequest | null>(null);
   const [approvalModalRequest, setApprovalModalRequest] = useState<SystemRequest | null>(null);
   const [deleteTargetRequest, setDeleteTargetRequest] = useState<SystemRequest | null>(null);
+  const [pickupModalRequest, setPickupModalRequest] = useState<SystemRequest | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleToggleApproval = async (category: RequestCategory, id: number, status?: string) => {
@@ -111,6 +113,7 @@ export function AdminRequestsTable({ initialRequests }: AdminRequestsTableProps)
           onEditRepair={setEditingRequest}
           onEditCctv={setCctvEditingRequest}
           onEditInternet={setInternetEditingRequest}
+          onNotifyPickup={setPickupModalRequest}
           onExportPdf={setSelectedPrintItem}
           onDelete={setDeleteTargetRequest}
         />
@@ -128,7 +131,11 @@ export function AdminRequestsTable({ initialRequests }: AdminRequestsTableProps)
       <PrintableRequestModal item={selectedPrintItem} onClose={() => setSelectedPrintItem(null)} />
 
       {editingRequest && (
-        <TechEditModal request={editingRequest} onClose={() => setEditingRequest(null)} />
+        <TechEditModal
+          request={editingRequest}
+          onClose={() => setEditingRequest(null)}
+          onOpenPickupModal={setPickupModalRequest}
+        />
       )}
 
       {cctvEditingRequest && (
@@ -153,6 +160,16 @@ export function AdminRequestsTable({ initialRequests }: AdminRequestsTableProps)
           onCancel={() => setApprovalModalRequest(null)}
           onConfirm={(status) => handleToggleApproval(approvalModalRequest.category, approvalModalRequest.id, status)}
           isSubmitting={!!loadingId}
+        />
+      )}
+
+      {pickupModalRequest && (
+        <RepairPickupModal
+          request={pickupModalRequest}
+          onClose={() => setPickupModalRequest(null)}
+          onSuccess={() => {
+            router.refresh();
+          }}
         />
       )}
     </div>

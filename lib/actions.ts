@@ -26,6 +26,15 @@ export async function updateRepairTechnicianFields(
   );
 }
 
+export async function sendRepairPickupEmail(params: {
+  repairId: number;
+  recipientEmail: string;
+  subject: string;
+  messageBody: string;
+}) {
+  return repairController.sendRepairPickupEmail(params);
+}
+
 // CCTV request actions
 export async function createCctvRequest(formData: FormData) {
   return cctvController.createCctvRequest(formData);

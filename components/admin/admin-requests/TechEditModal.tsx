@@ -10,22 +10,30 @@ import type { SystemRequest } from "./types";
 interface TechEditModalProps {
   request: SystemRequest;
   onClose: () => void;
+  onOpenPickupModal?: (request: SystemRequest) => void;
 }
 
-export function TechEditModal({ request, onClose }: TechEditModalProps) {
+export function TechEditModal({ request, onClose, onOpenPickupModal }: TechEditModalProps) {
   const router = useRouter();
   const [findings, setFindings] = useState(request.technicianFindings ?? "");
   const [recommendation, setRecommendation] = useState(request.technicianRecommendation ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSave = async () => {
+  const handleSave = async (andNotify = false) => {
     setSaving(true);
     setError("");
     try {
       await updateRepairTechnicianFields(request.id, findings, recommendation);
       router.refresh();
       onClose();
+      if (andNotify && onOpenPickupModal) {
+        onOpenPickupModal({
+          ...request,
+          technicianFindings: findings,
+          technicianRecommendation: recommendation,
+        });
+      }
     } catch (e: any) {
       setError(e.message || "Failed to save.");
     } finally {
@@ -81,14 +89,28 @@ export function TechEditModal({ request, onClose }: TechEditModalProps) {
           </p>
         )}
 
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="flex justify-end gap-2 pt-1 flex-wrap">
           <Button variant="ghost" onClick={onClose} className="cursor-pointer">
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="gap-2 cursor-pointer">
+          <Button
+            variant="outline"
+            onClick={() => handleSave(false)}
+            disabled={saving}
+            className="gap-2 cursor-pointer"
+          >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
             Save Notes
           </Button>
+          {onOpenPickupModal && (
+            <Button
+              onClick={() => handleSave(true)}
+              disabled={saving}
+              className="gap-1.5 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Save & Notify Pickup
+            </Button>
+          )}
         </div>
       </div>
     </div>

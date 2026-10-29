@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer, Pencil, Trash2 } from "lucide-react";
+import { Printer, Pencil, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./StatusBadge";
 import { CategoryBadge } from "./CategoryBadge";
@@ -13,6 +13,7 @@ interface RequestRowProps {
   onEditRepair: (request: SystemRequest) => void;
   onEditCctv: (request: SystemRequest) => void;
   onEditInternet: (request: SystemRequest) => void;
+  onNotifyPickup: (request: SystemRequest) => void;
   onExportPdf: (request: SystemRequest) => void;
   onDelete: (request: SystemRequest) => void;
 }
@@ -24,6 +25,7 @@ export function RequestRow({
   onEditRepair,
   onEditCctv,
   onEditInternet,
+  onNotifyPickup,
   onExportPdf,
   onDelete,
 }: RequestRowProps) {
@@ -82,6 +84,19 @@ export function RequestRow({
             >
               <Pencil className="size-3.5" />
               Edit
+            </Button>
+          )}
+
+          {req.category === "Repair" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onNotifyPickup(req)}
+              title="Email Requester: Ready for Pickup"
+              className="cursor-pointer text-xs h-8 px-2.5 gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+            >
+              <Mail className="size-3.5" />
+              Notify Pickup
             </Button>
           )}
 

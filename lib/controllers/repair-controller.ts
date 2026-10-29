@@ -153,3 +153,67 @@ export async function updateRepairTechnicianFields(
   revalidatePath("/super-admin");
   return { success: true };
 }
+
+// ---------------------------------------------------------------------------
+// Send Pickup Ready Email Notification (admin only)
+// ---------------------------------------------------------------------------
+
+export async function sendRepairPickupEmail({
+  repairId,
+  recipientEmail,
+  subject,
+  messageBody,
+}: {
+  repairId: number;
+  recipientEmail: string;
+  subject: string;
+  messageBody: string;
+}) {
+  const dbUser = await getOrSyncUser();
+  if (!dbUser || !isAdminOrSuperAdmin(dbUser)) {
+    throw new Error("Unauthorized: Admin privileges required.");
+  }
+
+  if (!recipientEmail || !recipientEmail.trim()) {
+    throw new Error("Recipient email is required.");
+  }
+  if (!subject || !subject.trim()) {
+    throw new Error("Email subject is required.");
+  }
+  if (!messageBody || !messageBody.trim()) {
+    throw new Error("Email message body is required.");
+  }
+
+  const item = await prisma.repairRequest.findUnique({
+    where: { id: repairId },
+    include: { createdBy: true },
+  });
+
+  if (!item) {
+    throw new Error("Repair request not found.");
+  }
+
+  const { sendEmail } = await import("@/lib/email/mailer");
+  const { formatPickupHtmlEmail } = await import("@/lib/email/templates/repair-pickup");
+
+  const html = formatPickupHtmlEmail({
+    subject: subject.trim(),
+    message: messageBody.trim(),
+    seriesNo: item.seriesNo,
+  });
+
+  await sendEmail({
+    to: recipientEmail.trim(),
+    subject: subject.trim(),
+    text: messageBody.trim(),
+    html,
+  });
+
+  await logAudit("NOTIFY_PICKUP_EMAIL", "RepairRequest", repairId, dbUser.id, {
+    recipientEmail: recipientEmail.trim(),
+    subject: subject.trim(),
+    seriesNo: item.seriesNo,
+  });
+
+  return { success: true };
+}
