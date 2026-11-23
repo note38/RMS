@@ -1,6 +1,7 @@
 "use client";
 
-import { useClerk, useSignIn, useSignUp, useUser } from "@clerk/nextjs";
+import { useSignIn, useSignUp, useUser } from "@clerk/nextjs";
+import { isClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { useSearchParams } from "next/navigation";
 import {
   useEffect,
@@ -35,10 +36,21 @@ function GoogleIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 function getErrorMessage(error: unknown): string {
+  if (isClerkAPIResponseError(error) && error.errors.length > 0) {
+    const first = error.errors[0];
+    if (first.code === "captcha_invalid" || first.code === "captcha_unavailable") {
+      return "Security verification failed. If you are using a VPN, proxy, or ad blocker, try disabling it, refresh the page, and try again.";
+    }
+    return first.longMessage || first.message || "Something went wrong. Please try again.";
+  }
   if (typeof error === "object" && error !== null) {
-    const e = error as any;
+    const e = error as {
+      errors?: Array<{ longMessage?: string; message?: string }>;
+      longMessage?: unknown;
+      message?: unknown;
+    };
     if (Array.isArray(e.errors) && e.errors.length > 0) {
-      return e.errors[0].longMessage || e.errors[0].message || "Unknown error";
+      return e.errors[0].longMessage || e.errors[0].message || "Something went wrong. Please try again.";
     }
     if (typeof e.longMessage === "string") return e.longMessage;
     if (typeof e.message === "string") return e.message;
@@ -47,13 +59,14 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function SignInForm() {
-  const clerk = useClerk();
   const { isLoaded: signInLoaded, signIn, setActive: setSignInActive } = useSignIn();
   const { isLoaded: signUpLoaded, signUp, setActive: setSignUpActive } = useSignUp();
   const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const searchParams = useSearchParams();
 
   const [step, setStep] = useState<"email" | "code">("email");
+  const [authFlow, setAuthFlow] = useState<"signIn" | "signUp">("signIn");
+  const [signInEmailAddressId, setSignInEmailAddressId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -71,9 +84,13 @@ export function SignInForm() {
     const redirectParam = searchParams.get("redirect_url");
     if (redirectParam) {
       try {
-        if (redirectParam.startsWith("/")) return redirectParam;
+        if (redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+          return redirectParam;
+        }
         const url = new URL(decodeURIComponent(redirectParam), window.location.origin);
-        if (url.origin === window.location.origin) return url.pathname;
+        if (url.origin === window.location.origin) {
+          return `${url.pathname}${url.search}`;
+        }
       } catch {
         // fall through
       }
@@ -92,29 +109,15 @@ export function SignInForm() {
       return;
     }
     setError(null);
+    setNotice(null);
     setIsSubmitting(true);
     try {
-      if (typeof (signIn as any).authenticateWithRedirect === "function") {
-        await (signIn as any).authenticateWithRedirect({
-          strategy: "oauth_google",
-          redirectUrl: `${window.location.origin}/sign-in/sso-callback`,
-        });
-      } else if (typeof (signIn as any).sso === "function") {
-        const { error: ssoErr } = await (signIn as any).sso({
-          strategy: "oauth_google",
-          redirectUrl: redirectUrl,
-          redirectCallbackUrl: `${window.location.origin}/sign-in/sso-callback`,
-        });
-        if (ssoErr) {
-          setError(getErrorMessage(ssoErr));
-        }
-      } else if (clerk && typeof (clerk as any).redirectToSignIn === "function") {
-        await (clerk as any).redirectToSignIn({
-          signInFallbackRedirectUrl: redirectUrl,
-        });
-      } else {
-        setError("OAuth authentication is not supported on this Clerk version.");
-      }
+      const callbackUrl = `${window.location.origin}/sign-in/sso-callback?redirect_url=${encodeURIComponent(redirectUrl)}`;
+      await signIn.authenticateWithRedirect({
+        strategy: "oauth_google",
+        redirectUrl: callbackUrl,
+        redirectUrlComplete: redirectUrl,
+      });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -124,6 +127,8 @@ export function SignInForm() {
 
   const handleEmailSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signInLoaded || !signIn || !signUpLoaded || !signUp) return;
+
     const trimmed = email.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setError("Enter a valid email address.");
@@ -135,50 +140,51 @@ export function SignInForm() {
     setIsSubmitting(true);
 
     try {
-      if (signIn) {
-        try {
-          let si: any;
-          if (typeof (signIn as any).create === "function") {
-            si = await (signIn as any).create({ identifier: trimmed });
-          }
-
-          if (si && si.prepareFirstFactor) {
-            await si.prepareFirstFactor({ strategy: "email_code" });
-            setEmail(trimmed);
-            setStep("code");
-            return;
-          } else if ((signIn as any).emailCode?.sendCode) {
-            await (signIn as any).emailCode.sendCode();
-            setEmail(trimmed);
-            setStep("code");
-            return;
-          }
-        } catch {
-          // fall through
+      try {
+        const si = await signIn.create({ identifier: trimmed });
+        const emailCodeFactor = si.supportedFirstFactors?.find(
+          (factor): factor is Extract<typeof factor, { strategy: "email_code" }> =>
+            factor.strategy === "email_code"
+        );
+        if (!emailCodeFactor) {
+          setError(
+            "Email verification code is not available for this account. Please continue with Google."
+          );
+          return;
         }
-      }
-
-      if (signUp) {
-        try {
-          if (typeof (signUp as any).create === "function") {
-            await (signUp as any).create({ emailAddress: trimmed });
-          }
-        } catch {
-          // Ignore if user already exists in sign up context
-        }
-
-        if ((signUp as any).prepareEmailAddressVerification) {
-          await (signUp as any).prepareEmailAddressVerification({ strategy: "email_code" });
-        } else if ((signUp as any).verifications?.sendEmailCode) {
-          await (signUp as any).verifications.sendEmailCode();
-        }
-
+        await si.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: emailCodeFactor.emailAddressId,
+        });
+        setAuthFlow("signIn");
+        setSignInEmailAddressId(emailCodeFactor.emailAddressId);
         setEmail(trimmed);
         setStep("code");
         return;
+      } catch (signInErr) {
+        const isNotFound =
+          isClerkAPIResponseError(signInErr) &&
+          signInErr.errors.some(
+            (errItem) =>
+              errItem.code === "form_identifier_not_found" ||
+              errItem.code === "identifier_not_found"
+          );
+        if (!isNotFound) {
+          throw signInErr;
+        }
       }
 
-      setError("Unable to send verification code. Please try again.");
+      const su = await signUp.create({ emailAddress: trimmed });
+      if (su.status === "complete" && su.createdSessionId) {
+        await setSignUpActive({ session: su.createdSessionId });
+        window.location.assign(redirectUrl);
+        return;
+      }
+      await su.prepareEmailAddressVerification({ strategy: "email_code" });
+      setAuthFlow("signUp");
+      setSignInEmailAddressId(null);
+      setEmail(trimmed);
+      setStep("code");
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -188,6 +194,8 @@ export function SignInForm() {
 
   const handleCodeSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!signInLoaded || !signIn || !signUpLoaded || !signUp) return;
+
     const trimmedCode = code.trim();
     if (!trimmedCode) {
       setError("Enter the code from your email.");
@@ -199,52 +207,28 @@ export function SignInForm() {
     setIsSubmitting(true);
 
     try {
-      if (signIn) {
-        try {
-          let result: any;
-          if ((signIn as any).attemptFirstFactor) {
-            result = await (signIn as any).attemptFirstFactor({
-              strategy: "email_code",
-              code: trimmedCode,
-            });
-          } else if ((signIn as any).emailCode?.verifyCode) {
-            await (signIn as any).emailCode.verifyCode({ code: trimmedCode });
-            result = await (signIn as any).finalize();
-          }
-
-          if (result && (result.status === "complete" || result.createdSessionId)) {
-            if (setSignInActive && result.createdSessionId) {
-              await setSignInActive({ session: result.createdSessionId });
-            }
-            window.location.assign(redirectUrl);
-            return;
-          }
-        } catch {
-          // Fall through to sign up attempt below
+      if (authFlow === "signIn") {
+        const result = await signIn.attemptFirstFactor({
+          strategy: "email_code",
+          code: trimmedCode,
+        });
+        if (result.status === "complete" && result.createdSessionId) {
+          await setSignInActive({ session: result.createdSessionId });
+          window.location.assign(redirectUrl);
+          return;
         }
-      }
-
-      if (signUp) {
-        let result: any;
-        if ((signUp as any).attemptEmailAddressVerification) {
-          result = await (signUp as any).attemptEmailAddressVerification({
-            code: trimmedCode,
-          });
-        } else if ((signUp as any).verifications?.verifyEmailCode) {
-          await (signUp as any).verifications.verifyEmailCode({ code: trimmedCode });
-          result = await (signUp as any).finalize();
-        }
-
-        if (result && (result.status === "complete" || result.createdSessionId)) {
-          if (setSignUpActive && result.createdSessionId) {
-            await setSignUpActive({ session: result.createdSessionId });
-          }
+      } else {
+        const result = await signUp.attemptEmailAddressVerification({
+          code: trimmedCode,
+        });
+        if (result.status === "complete" && result.createdSessionId) {
+          await setSignUpActive({ session: result.createdSessionId });
           window.location.assign(redirectUrl);
           return;
         }
       }
 
-      setError("Verification failed. Please check the code and try again.");
+      setError("Verification could not be completed. Please check the code and try again.");
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -253,18 +237,27 @@ export function SignInForm() {
   };
 
   const handleResend = async () => {
+    if (!signInLoaded || !signIn || !signUpLoaded || !signUp) return;
+
     setError(null);
     setNotice(null);
     setIsSubmitting(true);
     try {
-      if (signIn && (signIn as any).prepareFirstFactor) {
-        await (signIn as any).prepareFirstFactor({ strategy: "email_code" });
-        setNotice("A new code was sent to your email.");
-        return;
-      } else if (signUp && (signUp as any).prepareEmailAddressVerification) {
-        await (signUp as any).prepareEmailAddressVerification({ strategy: "email_code" });
-        setNotice("A new code was sent to your email.");
-        return;
+      if (authFlow === "signIn") {
+        const emailAddressId =
+          signInEmailAddressId ??
+          signIn.supportedFirstFactors?.find((f) => f.strategy === "email_code")
+            ?.emailAddressId;
+        if (!emailAddressId) {
+          setError("Unable to resend code. Please go back and enter your email again.");
+          return;
+        }
+        await signIn.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId,
+        });
+      } else {
+        await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       }
       setNotice("A new code was sent to your email.");
     } catch (err) {
@@ -277,11 +270,13 @@ export function SignInForm() {
   const backToEmail = () => {
     setStep("email");
     setCode("");
+    setAuthFlow("signIn");
+    setSignInEmailAddressId(null);
     setError(null);
     setNotice(null);
   };
 
-  if (!signIn || !signUp || (isUserLoaded && isSignedIn)) {
+  if (!signInLoaded || !signUpLoaded || !signIn || !signUp || (isUserLoaded && isSignedIn)) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground text-sm">
         <Loader2 className="size-5 animate-spin text-primary" />
@@ -300,9 +295,6 @@ export function SignInForm() {
           {error}
         </p>
       )}
-
-        {/* `clerk-captcha` placeholder moved to the server-rendered sign-in page
-          so Clerk can find it during initial script initialization. */}
 
       {step === "email" ? (
         <div className="space-y-4">
@@ -336,6 +328,7 @@ export function SignInForm() {
               placeholder="Work email address"
               className={inputClass}
             />
+            <div id="clerk-captcha" className="flex justify-center" />
             <button type="submit" disabled={isSubmitting} className={buttonClass}>
               {isSubmitting && <Loader2 className="size-4 animate-spin" />}
               Send verification code

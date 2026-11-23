@@ -10,6 +10,7 @@ const PUBLIC_PATH_PATTERNS = [
   /^\/terms($|\/.*)/,
   /^\/privacy($|\/.*)/,
   /^\/\.well-known($|\/.*)/,
+  /^\/__clerk($|\/.*)/,
 ];
 
 function isPublicRoute(pathname: string): boolean {
